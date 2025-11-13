@@ -33,7 +33,11 @@ CutTheCrap removes the complexity from legislation by providing:
 - Next.js 15 with App Router
 - TypeScript for type safety
 - Tailwind CSS for responsive design
-- PostgreSQL database
+- **Supabase** for database, authentication, and APIs
+  - PostgreSQL database with Row Level Security
+  - Built-in authentication and user management
+  - Auto-generated REST APIs
+  - Real-time subscriptions
 - Local LLM analysis via Ollama
 - Optional OpenAI integration for premium refinement
 - Content caching with SHA-256 hashing
@@ -61,7 +65,7 @@ Security is a primary requirement for CutTheCrap. See [SECURITY.md](./SECURITY.m
 ### Prerequisites
 
 - Node.js 18+ and npm
-- PostgreSQL 14+
+- A Supabase account (https://supabase.com) - provides PostgreSQL, Auth, and APIs
 - Ollama (for local LLM analysis)
 - Git
 
@@ -78,26 +82,25 @@ Security is a primary requirement for CutTheCrap. See [SECURITY.md](./SECURITY.m
    npm install
    ```
 
-3. **Set up environment variables**
+3. **Set up Supabase**
+
+   See detailed instructions in [supabase/README.md](./supabase/README.md)
+
+   Quick steps:
+   - Create a Supabase project at https://supabase.com
+   - Copy your Project URL and Anon Key from Settings → API
+   - Run the migration SQL from `supabase/migrations/20241113000000_initial_schema.sql`
+
+4. **Set up environment variables**
    ```bash
    cp .env.example .env.local
    ```
 
    Edit `.env.local` and configure:
-   - `DATABASE_URL`: Your PostgreSQL connection string
-   - `JWT_SECRET`: A secure random string (min 32 characters)
-   - `SESSION_SECRET`: Another secure random string
+   - `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anon/public key
    - `OLLAMA_BASE_URL`: Ollama server URL (default: http://localhost:11434)
    - Other optional settings
-
-4. **Set up the database**
-   ```bash
-   # Create the database
-   createdb cutthecrap
-
-   # Run the schema
-   psql -d cutthecrap -f lib/db/schema.sql
-   ```
 
 5. **Install and start Ollama**
    ```bash
@@ -144,15 +147,17 @@ Security is a primary requirement for CutTheCrap. See [SECURITY.md](./SECURITY.m
 
 ### Database Schema
 
-See `lib/db/schema.sql` for the complete schema. Key tables:
+See `supabase/migrations/20241113000000_initial_schema.sql` for the complete schema. Key tables:
 
-- `users`: Authentication and verified authors
+- `user_profiles`: User profiles (extends Supabase auth.users)
 - `bills`: Bill metadata and summaries
 - `bill_sections`: Individual bill sections with analysis
 - `votes`: Vote data by chamber
 - `partisan_perspectives`: Verified author perspectives
 - `content_cache`: Analysis caching
 - `audit_log`: Security audit trail
+
+All tables have Row Level Security (RLS) policies enabled for secure data access.
 
 ### LLM Integration
 
@@ -178,13 +183,12 @@ Optional OpenAI integration available for premium refinement.
 
 API routes are located in `app/api/`:
 
-- `/api/bills`: Bill management
-- `/api/bills/[id]`: Individual bill operations
-- `/api/analysis`: LLM analysis endpoints
-- `/api/auth`: Authentication and authorization
-- `/api/perspectives`: Partisan perspective management
+- `/api/bills`: List bills with pagination and filtering (✅ Implemented)
+- `/api/bills/[id]`: Get individual bill with sections, votes, and perspectives (✅ Implemented)
+- `/api/analysis`: LLM analysis endpoints (TODO)
+- `/api/perspectives`: Partisan perspective management (TODO)
 
-*Note: API routes to be implemented*
+Authentication is handled by Supabase Auth. Use Supabase client methods for user management.
 
 ## Contributing
 
