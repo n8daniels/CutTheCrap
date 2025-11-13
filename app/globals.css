@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bg-secondary text-text-primary;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-bg-card rounded-card shadow-card p-4 md:p-6;
+  }
+
+  .card-hover {
+    @apply transition-shadow duration-200 hover:shadow-card-hover;
+  }
+
+  .btn-primary {
+    @apply bg-dem-blue text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-200 text-text-primary px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition-colors;
+  }
+
+  .political-lean-bar {
+    @apply h-2 w-full rounded-full bg-gradient-to-r from-dem-blue via-neutral-gray to-rep-red;
+  }
+}

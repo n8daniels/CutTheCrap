@@ -1,0 +1,188 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "number": "H.R. 1234",
+  "title": "American Clean Energy Investment Act of 2024",
+  "sponsor": "Rep. Jane Smith (D-CA)",
+  "status": "passed_house",
+  "congress": 118,
+  "chamber": "house",
+  "introducedDate": "2024-03-15",
+  "lastActionDate": "2024-06-20",
+  "summary": "A bill to promote clean energy investment and reduce carbon emissions through tax incentives and regulatory reform.",
+  "bigPicture": {
+    "summary": "This bill gives tax breaks to companies that invest in solar panels, wind turbines, and electric vehicle charging stations. It also requires power plants to cut their pollution by 30% over the next 10 years. Think of it like offering a coupon to businesses that help clean up the environment.",
+    "soWhat": "This could speed up America's shift to clean energy and create thousands of new jobs in solar and wind industries. However, it might raise electricity prices in the short term and could hurt traditional coal and gas companies.",
+    "winners": [
+      "Clean energy companies (solar, wind, battery manufacturers)",
+      "Electric vehicle manufacturers and charging station operators",
+      "Coastal states with strong wind and solar resources",
+      "Construction workers in green energy sectors"
+    ],
+    "losers": [
+      "Coal mining companies and workers",
+      "Natural gas power plant operators",
+      "States heavily dependent on fossil fuel industries",
+      "Consumers facing potential short-term electricity rate increases"
+    ],
+    "sneakIndex": {
+      "score": 3,
+      "highlights": [
+        "Section 4 includes $500M for 'administrative costs' with limited oversight requirements",
+        "Tax credit eligibility requirements favor large corporations over small businesses",
+        "Exemption for certain facilities in economically distressed areas could create loopholes"
+      ]
+    },
+    "overallLean": -2
+  },
+  "sections": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "billId": "550e8400-e29b-41d4-a716-446655440000",
+      "sectionNumber": "1",
+      "title": "Tax Credits for Renewable Energy Investment",
+      "preview": "Provides 30% tax credit for businesses investing in solar, wind, and other renewable energy infrastructure.",
+      "simplifiedSummary": "If a company spends money on solar panels, wind turbines, or similar clean energy equipment, the government will give them back 30 cents for every dollar they spend as a tax break. It's like getting a 30% discount on clean energy equipment through your taxes.",
+      "deepDive": {
+        "historicalContext": "This builds on the Investment Tax Credit (ITC) first established in 2005 and expanded under the 2009 Recovery Act. Previous versions offered 10-26% credits and have been credited with tripling U.S. solar capacity.",
+        "geopoliticalImplications": "Positions the U.S. to compete with China's dominance in renewable manufacturing. Could reduce dependence on foreign energy sources but may initially increase reliance on Chinese solar panel imports.",
+        "economicFraming": "Uses supply-side tax incentives to stimulate private investment rather than direct government spending. Reflects a market-based approach to environmental policy favored by moderate Democrats and some Republicans.",
+        "precedentRisks": [
+          "Could set precedent for similar tax credits in other industries seeking government support",
+          "Sunset provisions may create cliff effects if not renewed, disrupting market planning"
+        ],
+        "ideologicalFingerprints": [
+          "Market-based environmentalism (center-left)",
+          "Industrial policy through tax code (progressive)",
+          "Private sector partnership approach (centrist)"
+        ]
+      },
+      "ideologyScore": -1,
+      "politicalLean": -2,
+      "economicTags": ["capitalist", "regulated", "keynesian"],
+      "riskNotes": [
+        "Credit may disproportionately benefit large corporations with tax liability",
+        "Could increase federal deficit by $45B over 10 years without corresponding cuts"
+      ],
+      "rawText": "SEC. 1. RENEWABLE ENERGY INVESTMENT TAX CREDIT.\n\n(a) IN GENERAL.—Section 48 of the Internal Revenue Code of 1986 is amended by adding at the end the following new subsection:\n\n\"(e) ENHANCED CREDIT FOR RENEWABLE ENERGY PROPERTY.—\n\n\"(1) IN GENERAL.—In the case of any qualified renewable energy property, the energy percentage shall be 30 percent.\n\n\"(2) QUALIFIED RENEWABLE ENERGY PROPERTY.—For purposes of this subsection, the term 'qualified renewable energy property' means property—\n\n\"(A) which is solar, wind, geothermal, or qualified hydropower property,\n\n\"(B) construction of which begins before January 1, 2035, and\n\n\"(C) which meets applicable labor standards as determined by the Secretary.\"",
+      "contentHash": "a7f3b2c1d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1",
+      "order": 1
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440002",
+      "billId": "550e8400-e29b-41d4-a716-446655440000",
+      "sectionNumber": "2",
+      "title": "Emission Reduction Requirements for Power Plants",
+      "preview": "Requires all power plants to reduce carbon emissions by 30% by 2034.",
+      "simplifiedSummary": "Every power plant in America must cut its pollution by 30% within the next 10 years. If they don't, they'll face fines of up to $1 million per year. Power plants can meet this by switching to cleaner fuel, capturing their pollution, or buying 'credits' from cleaner plants.",
+      "deepDive": {
+        "historicalContext": "Most aggressive federal emissions standard since the Clean Power Plan (2015), which was blocked by the Supreme Court in West Virginia v. EPA (2022). This statute-based approach attempts to avoid the 'major questions doctrine' legal challenge.",
+        "geopoliticalImplications": "Aligns U.S. with Paris Agreement commitments and may pressure other major emitters (China, India) to strengthen standards. Could affect energy export competitiveness.",
+        "economicFraming": "Combines command-and-control regulation (mandatory targets) with market mechanisms (tradable credits). Represents Pigouvian approach to internalizing pollution externalities.",
+        "precedentRisks": [
+          "Establishes federal authority over state-regulated utilities, potentially expanding Commerce Clause interpretation",
+          "May trigger legal challenges on federalism grounds from coal-dependent states"
+        ],
+        "ideologicalFingerprints": [
+          "Regulatory environmentalism (progressive)",
+          "Federal intervention in markets (center-left)",
+          "Cap-and-trade mechanisms (centrist/technocratic)"
+        ]
+      },
+      "ideologyScore": -3,
+      "politicalLean": -3,
+      "economicTags": ["regulated", "authoritarian", "redistributive"],
+      "riskNotes": [
+        "May force premature closure of coal plants, affecting grid reliability",
+        "Enforcement mechanisms unclear for states that resist compliance",
+        "Credit trading system could create gaming opportunities for large utilities"
+      ],
+      "rawText": "SEC. 2. CARBON EMISSION REDUCTION STANDARDS.\n\n(a) EMISSION STANDARDS.—Not later than January 1, 2035, each covered power plant shall reduce carbon dioxide emissions by not less than 30 percent compared to a baseline of average emissions during calendar years 2020-2022.\n\n(b) COMPLIANCE MECHANISMS.—A covered power plant may achieve compliance through—\n\n(1) direct emission reductions;\n\n(2) carbon capture and sequestration;\n\n(3) purchase of emission reduction credits under subsection (c); or\n\n(4) any combination of paragraphs (1) through (3).\n\n(c) EMISSION REDUCTION CREDIT TRADING PROGRAM.—The Administrator shall establish a program allowing covered power plants that exceed the emission reduction requirement to sell credits to covered power plants that have not achieved the required reduction.",
+      "contentHash": "b8g4c3d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7a8b9c0d1e2f3",
+      "order": 2
+    }
+  ],
+  "votes": {
+    "house": {
+      "date": "2024-06-20",
+      "result": "passed",
+      "yeas": 224,
+      "nays": 208,
+      "present": 2,
+      "notVoting": 1,
+      "breakdown": {
+        "democratic": {
+          "yeas": 212,
+          "nays": 2,
+          "present": 1,
+          "notVoting": 0
+        },
+        "republican": {
+          "yeas": 12,
+          "nays": 206,
+          "present": 1,
+          "notVoting": 1
+        },
+        "independent": {
+          "yeas": 0,
+          "nays": 0,
+          "present": 0,
+          "notVoting": 0
+        }
+      }
+    }
+  },
+  "partisanTakes": {
+    "democratic": {
+      "authorId": "auth-001",
+      "authorName": "Rep. Sarah Johnson",
+      "authorTitle": "Representative, D-WA, Energy & Commerce Committee",
+      "perspective": "This legislation represents a balanced approach to addressing climate change while creating good-paying American jobs. The tax credits will unleash private sector innovation, and the emission standards provide the certainty businesses need to plan long-term investments. We've included provisions to protect workers in transitioning industries and ensure no community is left behind.",
+      "keyPoints": [
+        "Creates estimated 500,000 jobs in clean energy sector over 10 years",
+        "Reduces healthcare costs by $12B annually through cleaner air",
+        "Positions America as global leader in clean energy technology",
+        "Includes $2B transition assistance for affected coal communities"
+      ],
+      "supports": [
+        "Job creation in growing industries",
+        "Public health improvements from reduced air pollution",
+        "Long-term energy independence and security",
+        "Economic competitiveness in global clean energy markets"
+      ],
+      "concerns": [
+        "May not go far enough to meet 2030 climate targets",
+        "Tax credits should have stronger labor and domestic content requirements",
+        "Need more funding for disadvantaged community transition"
+      ],
+      "createdAt": "2024-06-21T10:30:00Z",
+      "verified": true
+    },
+    "republican": {
+      "authorId": "auth-002",
+      "authorName": "Rep. Mike Thompson",
+      "authorTitle": "Representative, R-TX, Energy & Commerce Committee",
+      "perspective": "While we support an all-of-the-above energy strategy, this bill picks winners and losers through the tax code and imposes costly mandates that will raise electricity prices for families and businesses. The emission requirements are unrealistic and will force reliable baseload power plants offline before replacement capacity is ready, threatening grid reliability. We should pursue innovation, not regulation.",
+      "keyPoints": [
+        "Could increase average household electricity bills by $500-800 annually",
+        "Forces closure of reliable coal and gas plants before grid-ready alternatives exist",
+        "Tax credits favor politically connected industries over true market competition",
+        "Threatens energy security by reducing domestic baseload generation capacity"
+      ],
+      "supports": [
+        "Tax credits for nuclear energy and carbon capture (bipartisan technologies)",
+        "State flexibility in meeting energy goals"
+      ],
+      "concerns": [
+        "Emission mandates are too aggressive and economically damaging",
+        "Will eliminate thousands of well-paying coal and natural gas jobs",
+        "Threatens grid reliability and energy security",
+        "Picks winners through tax code rather than letting markets decide",
+        "Ignores that U.S. emissions are already declining under current policies"
+      ],
+      "createdAt": "2024-06-21T11:15:00Z",
+      "verified": true
+    }
+  },
+  "createdAt": "2024-03-15T09:00:00Z",
+  "updatedAt": "2024-06-20T16:30:00Z"
+}
