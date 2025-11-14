@@ -1,23 +1,28 @@
 # CutTheCrap
 
-A straightforward tool for cutting through the noise and getting to what matters.
+An AI-powered analysis platform that learns from your data to deliver actionable insights without the fluff.
 
 ## 🎯 Purpose
 
-CutTheCrap helps you focus on what's important by filtering out unnecessary clutter, complexity, and noise from your workflow.
+CutTheCrap isn't just another document processing tool—it's a platform for building **trainable AI models** that understand your specific use case. The focus is on **teaching AI to analyze data intelligently**, not just parsing documents.
 
 ## 🚀 Status
 
 **Currently in early development**
 
-This project is being actively developed. Check back soon for updates!
+Building the foundation for custom AI training and intelligent data analysis.
 
-## 📋 Planned Features
+## 🧠 Core Focus
 
-- Clean, minimal interface
-- Smart filtering and prioritization
-- No-nonsense approach to productivity
-- Fast and lightweight
+**Training AI, Not Just Processing Documents**
+
+This project prioritizes:
+- Building trainable AI models that learn from your specific datasets
+- Creating intelligent analysis pipelines that improve over time
+- Developing custom AI behaviors tailored to your needs
+- Focusing on **how to train AI effectively**, not just what data to feed it
+
+The documents are just input—the real value is in training AI to extract meaningful insights from them.
 
 ## 🛠️ Tech Stack
 
