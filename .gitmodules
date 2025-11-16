@@ -1,0 +1,3 @@
+[submodule "packages/feddoc-mcp"]
+	path = packages/feddoc-mcp
+	url = https://github.com/n8daniels/FedDocMCP.git
