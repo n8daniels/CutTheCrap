@@ -1,44 +1,106 @@
 # Building Your Custom CutTheCrapLLM
 
-This guide walks you through building a custom fine-tuned language model specialized in analyzing federal legislation using documents fetched via Model Context Protocol (MCP).
+## 🎓 Learning Objectives
 
-## Why a Custom LLM?
+This is an **educational guide** that teaches you how to build a custom fine-tuned language model from scratch. You'll learn:
 
-General-purpose LLMs like GPT-4 are powerful, but they:
-- Don't understand the specific structure of federal legislation
-- Lack knowledge of recent bills and laws
-- Can't leverage the full context of bill dependencies
-- Aren't optimized for legislative analysis
+- How to collect training data from user interactions
+- How to use MCP to provide rich context to LLMs
+- How to format data for OpenAI fine-tuning
+- How to manage the complete training pipeline
+- Best practices for building domain-specific models
 
-**CutTheCrapLLM solves this by:**
-- Training on real legislative documents with full dependency graphs
-- Learning from high-quality human-AI interactions
-- Understanding bill structure, amendments, and cross-references
-- Providing accurate, well-cited legislative analysis
+**This project uses federal legislation as example data**, but the techniques apply to any specialized domain.
 
-## The Training Pipeline
+## Why Build a Custom LLM? (The Learning Perspective)
+
+This project demonstrates why and how to fine-tune models:
+
+**General-purpose LLMs (like GPT-4):**
+- Don't have specialized domain knowledge
+- Can't access external data without integration
+- Aren't optimized for specific tasks
+- May lack recent information
+
+**Custom fine-tuned models (what you'll build):**
+- Learn domain-specific patterns and terminology
+- Work with structured external data (via MCP)
+- Optimize for specific use cases
+- Provide more accurate, contextual responses
+
+**What you'll learn by building CutTheCrapLLM:**
+- Training data collection and quality management
+- Document graph construction with MCP
+- Fine-tuning workflow with OpenAI API
+- Model deployment and versioning
+- Evaluation and iteration strategies
+
+## The Training Pipeline (What You'll Build)
+
+This project demonstrates a complete end-to-end LLM training pipeline:
 
 ```
-User Question → MCP Fetches Bill + Dependencies → AI Responds → Save Training Example
-                                                        ↓
-                                                  (Repeat 100s of times)
-                                                        ↓
-                                          Export to JSONL → Fine-tune → Deploy
+┌─────────────────────────────────────────────────────────────┐
+│  Step 1: User asks question about a bill                    │
+└────────────────────┬────────────────────────────────────────┘
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│  Step 2: MCP fetches bill + dependencies                    │
+│  (Learn: How to use MCP for data fetching)                  │
+└────────────────────┬────────────────────────────────────────┘
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│  Step 3: Build rich AI context with document graph          │
+│  (Learn: Context engineering for LLMs)                       │
+└────────────────────┬────────────────────────────────────────┘
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│  Step 4: AI generates response                               │
+│  (Learn: Inference with context)                             │
+└────────────────────┬────────────────────────────────────────┘
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│  Step 5: Save interaction as training example                │
+│  (Learn: Training data collection)                           │
+└────────────────────┬────────────────────────────────────────┘
+                     ↓
+                (Repeat 100-500 times)
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│  Step 6: Export to JSONL format                              │
+│  (Learn: Data formatting for fine-tuning)                    │
+└────────────────────┬────────────────────────────────────────┘
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│  Step 7: Fine-tune with OpenAI API                           │
+│  (Learn: Model fine-tuning workflow)                         │
+└────────────────────┬────────────────────────────────────────┘
+                     ↓
+┌─────────────────────────────────────────────────────────────┐
+│  Step 8: Deploy and use your custom model                    │
+│  (Learn: Model deployment and versioning)                    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## Quick Start
+**Educational Value:** This pipeline teaches you every step of building a production-ready custom LLM.
+
+## Quick Start (Learning Path)
 
 ### 1. Prerequisites
 
 ```bash
-# Required
+# Required for this learning project
 - Node.js 18+
 - Congress.gov API key (free at https://api.congress.gov/sign-up/)
 - OpenAI API key with fine-tuning access
 
-# Optional
-- FedDocMCP server (or build your own MCP server)
+# Learning components
+- FedDocMCP server (companion project - teaches MCP implementation)
+- Basic understanding of APIs and TypeScript
+- Familiarity with LLM concepts (helpful but not required)
 ```
+
+**Note:** FedDocMCP is a companion learning project that demonstrates how to build MCP servers. This project (CutTheCrap) demonstrates how to use MCP data to train custom LLMs.
 
 ### 2. Installation
 
@@ -401,13 +463,37 @@ Track these to evaluate your model:
    - Question diversity
    - Feedback distribution
 
-## Next Steps
+## Next Steps in Your Learning Journey
 
-1. ✅ Collect your first 100 training examples
-2. ✅ Export and fine-tune your model
-3. ✅ Deploy and test with real users
-4. ✅ Iterate based on feedback
-5. ✅ Scale to production
+1. ✅ **Understand the code** - Read through the implementation
+2. ✅ **Collect your first 100 training examples** - Learn data collection
+3. ✅ **Export and fine-tune your model** - Understand the fine-tuning process
+4. ✅ **Test your custom model** - See the results of your work
+5. ✅ **Experiment** - Try different approaches and configurations
+6. ✅ **Apply to your domain** - Use these techniques for your own projects
+
+## What You've Learned
+
+By completing this project, you now understand:
+
+- ✅ **End-to-end LLM training** - From data collection to deployment
+- ✅ **MCP integration** - How to fetch and organize external data
+- ✅ **Training data engineering** - Quality, formatting, and management
+- ✅ **Fine-tuning workflows** - Using OpenAI's fine-tuning API
+- ✅ **Context engineering** - Providing rich context to LLMs
+- ✅ **Model deployment** - Versioning and serving custom models
+
+## Apply These Techniques to Other Domains
+
+The pipeline you built works for any specialized domain:
+
+- **Healthcare** - Train on medical literature and guidelines
+- **Legal** - Train on case law and contracts
+- **Finance** - Train on financial reports and analysis
+- **Research** - Train on academic papers and patents
+- **Customer Support** - Train on product docs and tickets
+
+The MCP + training pipeline pattern is universal!
 
 ## Resources
 

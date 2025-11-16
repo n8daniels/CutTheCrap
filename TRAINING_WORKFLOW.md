@@ -1,10 +1,21 @@
 # CutTheCrapLLM Training Workflow
 
-This document explains how to build, train, and deploy your custom CutTheCrapLLM using federal documents fetched via MCP (Model Context Protocol).
+## 🎓 Educational Purpose
+
+This document is a **learning guide** for building and training custom LLMs. It demonstrates a complete production-ready training pipeline using federal legislation as example data.
+
+**What you'll learn:**
+- Complete LLM training workflow from scratch
+- How to use Model Context Protocol (MCP) for data fetching
+- Training data collection and quality management
+- Fine-tuning with OpenAI's API
+- Model deployment and versioning
+
+**Note:** While this uses federal legislation data, the techniques apply to **any specialized domain** (healthcare, legal, finance, etc.).
 
 ## Overview
 
-CutTheCrap uses a complete training pipeline:
+This learning project demonstrates a complete training pipeline:
 
 1. **Document Fetching** - FedDocMCP fetches bills with full dependency graphs
 2. **User Interaction** - Users chat with the AI, asking questions about bills
@@ -13,16 +24,20 @@ CutTheCrap uses a complete training pipeline:
 5. **Fine-tuning** - OpenAI API fine-tunes a custom model
 6. **Deployment** - The fine-tuned model is used for inference
 
-## Architecture
+## Architecture (What You'll Build)
+
+This architecture demonstrates key LLM training concepts:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    User Asks Question                        │
+│  User Asks Question                                          │
+│  (Learning: User interaction triggers data collection)       │
 └─────────────────────────┬───────────────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
-│              FedDocMCP Fetches Bill + Dependencies           │
+│  FedDocMCP Fetches Bill + Dependencies                       │
+│  (Learning: MCP provides rich external data)                 │
 │  • Primary Bill (H.R. 3684)                                  │
 │  • Amendments (SA 2137)                                      │
 │  • Referenced Laws (23 U.S.C. § 119)                         │
@@ -31,33 +46,41 @@ CutTheCrap uses a complete training pipeline:
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
-│              Build AI Context with Full Graph                │
-│  • Complete legislative context                              │
-│  • Smart summarization (not full text for deps)              │
+│  Build AI Context with Full Graph                            │
+│  (Learning: Context engineering for better responses)        │
+│  • Complete document context                                 │
+│  • Smart summarization (optimize token usage)                │
 │  • Cross-references and relationships                        │
 └─────────────────────────┬───────────────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
-│          CutTheCrapLLM Generates Response                    │
-│  • Uses GPT-4 (initial) or fine-tuned model                  │
+│  CutTheCrapLLM Generates Response                            │
+│  (Learning: Inference with rich context)                     │
+│  • Uses GPT-4 (initial) or fine-tuned model (after training) │
 │  • Leverages full document context                           │
 │  • Provides accurate, well-cited answers                     │
 └─────────────────────────┬───────────────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
-│              Save Training Example (if training mode)        │
+│  Save Training Example (if training mode enabled)            │
+│  (Learning: Automatic training data collection)              │
 │  • Question                                                  │
 │  • Full AI Context (document graph)                          │
 │  • AI Response                                               │
-│  • Metadata (bill ID, timestamp, etc.)                       │
+│  • Metadata (bill ID, timestamp, feedback)                   │
 └──────────────────────────────────────────────────────────────┘
+
+After collecting 100-500 examples:
+Export → Fine-tune → Deploy custom model
 ```
 
-## Step-by-Step Guide
+**Key Learning:** This architecture shows how to automatically collect high-quality training data from real user interactions.
 
-### Step 1: Initial Setup
+## Step-by-Step Learning Guide
+
+### Step 1: Initial Setup (Learning: Project Configuration)
 
 ```bash
 # Clone the repository
@@ -68,17 +91,23 @@ cd CutTheCrap
 npm install
 
 # Set up FedDocMCP as a submodule
-# (You'll need to create this separately or use an existing MCP server)
+# LEARNING NOTE: FedDocMCP is a companion project that demonstrates
+# how to build MCP servers. This teaches MCP implementation.
 git submodule add https://github.com/yourusername/feddoc-mcp.git packages/feddoc-mcp
 git submodule update --init --recursive
 
 # Configure environment
 cp .env.example .env
 # Edit .env with your API keys:
-# - CONGRESS_API_KEY
-# - OPENAI_API_KEY
-# - Set CUTTHECRAP_TRAINING_MODE=true
+# - CONGRESS_API_KEY (free from https://api.congress.gov)
+# - OPENAI_API_KEY (for fine-tuning)
+# - Set CUTTHECRAP_TRAINING_MODE=true (enables automatic data collection)
 ```
+
+**What you're learning:**
+- Project structure and dependencies
+- Environment configuration for LLM training
+- MCP server integration
 
 ### Step 2: Start Development Server
 
@@ -88,7 +117,7 @@ npm run dev
 
 The app will be available at http://localhost:3000
 
-### Step 3: Collect Training Data
+### Step 3: Collect Training Data (Learning: Automated Data Collection)
 
 Enable training mode in `.env`:
 
@@ -96,7 +125,9 @@ Enable training mode in `.env`:
 CUTTHECRAP_TRAINING_MODE=true
 ```
 
-Then interact with the API:
+**What this does:** Every API interaction is automatically saved as a training example. This teaches you how to build automated data collection pipelines.
+
+Then interact with the API to generate training examples:
 
 ```bash
 # Example 1: Ask about Infrastructure Bill
@@ -124,7 +155,15 @@ curl -X POST http://localhost:3000/api/chat \
   }'
 ```
 
-Each interaction will be saved as a training example in `data/training/`.
+**What's happening behind the scenes:**
+1. MCP fetches the bill and dependencies
+2. System builds rich context with full document graph
+3. AI generates response using that context
+4. Entire interaction (question + context + response) saved as training example
+
+Each interaction is saved in `data/training/` as a JSON file.
+
+**Learning objective:** Understand how to automatically capture high-quality training data from production interactions.
 
 ### Step 4: Review Training Data
 
@@ -142,13 +181,13 @@ This will show:
 - Feedback distribution
 - Date range
 
-### Step 5: Export Training Data to JSONL
+### Step 5: Export Training Data to JSONL (Learning: Data Formatting)
 
 ```bash
 # Export all training data
 npm run export-training-data
 
-# Export with filters
+# Export with quality filters (recommended)
 npm run export-training-data -- \
   --start 2024-01-01 \
   --end 2024-12-31 \
@@ -156,7 +195,12 @@ npm run export-training-data -- \
   --output my_training_data.jsonl
 ```
 
-This will create a JSONL file in `data/training/` with the format:
+**What you're learning:**
+- How to format training data for OpenAI fine-tuning
+- Quality filtering strategies (feedback scores, deduplication)
+- JSONL format requirements
+
+This creates a JSONL file in `data/training/` with OpenAI's required format:
 
 ```json
 {
@@ -177,22 +221,30 @@ This will create a JSONL file in `data/training/` with the format:
 }
 ```
 
-### Step 6: Fine-tune CutTheCrapLLM
+### Step 6: Fine-tune CutTheCrapLLM (Learning: Model Fine-tuning)
 
 ```bash
 # Start fine-tuning with your exported data
 npm run finetune -- --training-file data/training/training_data.jsonl
 
-# With validation set (recommended)
+# With validation set (recommended for preventing overfitting)
 npm run finetune -- \
   --training-file data/training/training_data.jsonl \
   --validation-file data/training/validation_data.jsonl
 ```
 
+**What you're learning:**
+- How to use OpenAI's fine-tuning API
+- Uploading training data to OpenAI
+- Managing fine-tuning jobs
+- Validation sets and overfitting prevention
+
 This will:
 1. Upload your training data to OpenAI
 2. Create a fine-tuning job
 3. Return a job ID for tracking
+
+**Estimated time:** 1-4 hours depending on dataset size
 
 ### Step 7: Monitor Fine-tuning Progress
 
@@ -206,7 +258,7 @@ npm run finetune-status
 
 Fine-tuning typically takes 1-4 hours depending on dataset size.
 
-### Step 8: Deploy Fine-tuned Model
+### Step 8: Deploy Fine-tuned Model (Learning: Model Deployment)
 
 Once fine-tuning completes, update your `.env`:
 
@@ -215,7 +267,12 @@ Once fine-tuning completes, update your `.env`:
 CUTTHECRAP_MODEL_ID=ft:gpt-4o-mini:your-org:cutthecrap:abc123
 ```
 
-Now all API requests will use your custom model!
+**What you're learning:**
+- Model versioning and deployment
+- Switching between base and fine-tuned models
+- A/B testing strategies (compare base vs. fine-tuned performance)
+
+Now all API requests will use your custom model! Your LLM training journey is complete.
 
 ## Training Data Best Practices
 
@@ -399,20 +456,75 @@ Track these metrics to evaluate your model:
 - Review system message construction
 - Ensure context is not truncated due to token limits
 
-## Next Steps
+## Next Steps in Your Learning Journey
 
-1. **Collect 100+ training examples** from diverse bills
-2. **Export and fine-tune** your first model
-3. **Deploy and test** with real users
-4. **Iterate**: Collect feedback, add examples, retrain
-5. **Scale**: Add more document types, improve dependency detection
+1. ✅ **Collect 100+ training examples** - Learn data collection at scale
+2. ✅ **Export and fine-tune** your first model - Complete the full pipeline
+3. ✅ **Deploy and test** - See your custom model in action
+4. ✅ **Iterate** - Collect feedback, add examples, retrain
+5. ✅ **Experiment** - Try different approaches and optimizations
+6. ✅ **Apply to your domain** - Use these techniques for your own projects
+
+## What You've Learned
+
+By completing this workflow, you now understand:
+
+### LLM Training Fundamentals
+- ✅ How to collect training data from user interactions
+- ✅ How to format data for fine-tuning (JSONL)
+- ✅ How to use OpenAI's fine-tuning API
+- ✅ How to manage model versions and deployments
+- ✅ Quality filtering and deduplication strategies
+
+### MCP Integration
+- ✅ How MCP servers fetch external data
+- ✅ Building document dependency graphs
+- ✅ Context engineering for better LLM responses
+- ✅ Caching strategies for performance
+
+### Production Best Practices
+- ✅ Automated training data collection
+- ✅ Streaming AI responses
+- ✅ User feedback loops
+- ✅ A/B testing base vs. fine-tuned models
+- ✅ Continuous model improvement
+
+## Companion Learning Project: FedDocMCP
+
+This project (CutTheCrap) demonstrates **training custom LLMs**.
+
+The companion project **FedDocMCP** demonstrates **building MCP servers**.
+
+Together, they teach:
+- **FedDocMCP**: How to build MCP servers that fetch and organize external data
+- **CutTheCrap**: How to use that data to train domain-specific LLMs
+
+Both are educational projects designed for hands-on learning.
+
+## Apply These Techniques Elsewhere
+
+The MCP + LLM training pipeline you've learned works for any domain:
+
+- **Healthcare** - Train on medical literature, clinical guidelines
+- **Legal** - Train on case law, contracts, regulations
+- **Finance** - Train on SEC filings, financial reports
+- **Research** - Train on academic papers, patents
+- **Customer Support** - Train on product docs, support tickets
+
+The architecture and workflow remain the same - just swap out the data source!
 
 ## Resources
 
+**Learning Materials:**
 - [OpenAI Fine-tuning Guide](https://platform.openai.com/docs/guides/fine-tuning)
-- [Congress.gov API](https://api.congress.gov/)
-- [Model Context Protocol](https://modelcontextprotocol.io/)
+- [Model Context Protocol Documentation](https://modelcontextprotocol.io/)
+- [Congress.gov API Documentation](https://api.congress.gov/)
+
+**Related Projects:**
+- [FedDocMCP](https://github.com/yourusername/feddoc-mcp) - Companion MCP server learning project
 
 ---
 
-**Built with focus. No fluff, no BS, just results.**
+**Built to learn. Built to teach. Built with focus.**
+
+*This is an educational project demonstrating LLM training and MCP integration. The techniques learned here apply to building any domain-specific AI system.*
