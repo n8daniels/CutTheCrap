@@ -36,3 +36,15 @@ yarn-error.log*
 
 # OS
 Thumbs.db
+
+# Next.js
+.next/
+*.tsbuildinfo
+next-env.d.ts
+
+# Training data (contains sensitive information)
+data/training/*.json
+data/training/*.jsonl
+
+# Cache
+.cache/
