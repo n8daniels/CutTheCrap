@@ -1,11 +1,14 @@
 /**
  * Document Graph Builder - Builds complete dependency graphs for bills
+ *
+ * SECURITY: Uses safe dependency detector with ReDoS protection
+ * See: docs/security/threat_model.md - Scenario 3
  */
 
 import { DocumentGraph, DocumentNode, Dependency } from '@/types/document';
 import { FedDocMCPClient } from '@/services/mcp-client';
 import { DocumentCache } from './document-cache';
-import { DependencyDetector } from './dependency-detector';
+import { DependencyDetector } from './dependency-detector-safe';
 
 export class DocumentGraphBuilder {
   private dependencyDetector: DependencyDetector;
