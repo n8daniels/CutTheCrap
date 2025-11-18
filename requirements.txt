@@ -24,8 +24,9 @@ matplotlib==3.8.2
 seaborn==0.13.0
 tabulate==0.9.0
 
-# MCP SDK (for MCP-enhanced version)
-mcp==0.1.0
+# MCP SDK (for production MCP integration - optional)
+# Install separately: pip install mcp
+# Our demo uses simulated MCP functionality
 
 # Testing
 pytest==7.4.3
