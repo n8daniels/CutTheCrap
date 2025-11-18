@@ -1,0 +1,18 @@
+⚠️ IMPORTANT: Git Push Required ⚠️
+
+The git push commands are timing out (504 errors). This is likely a temporary network issue.
+
+ALL YOUR COMMITS ARE SAVED LOCALLY!
+
+When you get home, run:
+
+    git push origin claude/open-tasks-01PGkUpVA6pAEWE7UwFhmvG8
+
+This will push these 5 commits:
+✅ 2520a0a - Add START_HERE quick start guide
+✅ 420f53f - Add comprehensive project summary
+✅ 13cb371 - Add testing guide and roadmap
+✅ 2bbd5e6 - Add FedDocMCP server implementation
+✅ 96e4597 - Add FedDocMCP server implementation and fix MCP client
+
+Everything is committed locally and ready to push!
