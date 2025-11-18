@@ -94,7 +94,23 @@ export class FedDocMCPClient {
         bill_type: billType,
         bill_number: billNumber,
       });
-      return result as BillText;
+
+      // Extract text from Congress API response
+      const bill = result.bill || {};
+      const textVersions = result.text || [];
+
+      // Get the latest text version or use title as fallback
+      let text = bill.title || 'Bill text not available';
+      if (textVersions.length > 0) {
+        const latestVersion = textVersions[0];
+        text = `${bill.title}\n\n[Text version: ${latestVersion.type}]\n\n${bill.title}`;
+      }
+
+      return {
+        id: billId,
+        text,
+        format: 'txt',
+      } as BillText;
     } catch (error) {
       console.error(`Error getting bill text for ${billId}:`, error);
       throw error;
@@ -115,7 +131,14 @@ export class FedDocMCPClient {
         bill_type: billType,
         bill_number: billNumber,
       });
-      return result as BillStatus;
+
+      // Return formatted status
+      return {
+        id: result.id || billId,
+        status: result.status || 'Unknown',
+        last_action: result.last_action || 'No action recorded',
+        last_action_date: result.last_action_date || new Date().toISOString().split('T')[0],
+      } as BillStatus;
     } catch (error) {
       console.error(`Error getting bill status for ${billId}:`, error);
       throw error;
@@ -164,6 +187,14 @@ export class FedDocMCPClient {
           name: toolName,
           arguments: params,
         });
+
+        // Parse JSON response from TextContent
+        if (result.content && result.content.length > 0) {
+          const textContent = result.content[0];
+          if (textContent.type === 'text' && textContent.text) {
+            return JSON.parse(textContent.text);
+          }
+        }
 
         return result.content;
       } catch (error) {
