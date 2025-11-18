@@ -1,0 +1,15 @@
+{
+  "id": "bill_117_hr_3684",
+  "title": "Infrastructure Investment and Jobs Act (H.R. 3684)",
+  "content": "Infrastructure Investment and Jobs Act. This comprehensive legislation provides funding for transportation infrastructure, broadband deployment, and water systems across the United States. Section 1: Short Title. This Act may be cited as the Infrastructure Investment and Jobs Act. Section 2: Definitions. For purposes of this Act, infrastructure includes roads, bridges, public transportation, rail, aviation, ports, waterways, broadband, water infrastructure, and power infrastructure. Section 3: Authorization of Appropriations. There is authorized to be appropriated $550 billion for infrastructure investments over the next five years. Section 4: Highway Programs. This section references 23 U.S.C. § 119 for the National Highway Performance Program funding formulas. The allocation shall follow the formula established in the FAST Act (Public Law 114-94) with modifications as outlined in Amendment SA 2137. Section 5: Broadband Deployment. This section authorizes $65 billion for broadband infrastructure to expand high-speed internet access to underserved areas. As modified by Amendment SA 2137, this includes specific provisions for rural communities and tribal lands. Section 6: Public Transportation. Federal transit funding is increased by 30% over previous authorization levels to modernize aging systems and expand service in growing metropolitan areas. Section 7: Water Infrastructure. Invests $55 billion in water infrastructure improvements including replacing lead pipes, upgrading wastewater systems, and addressing PFAS contamination. Section 8: Power Infrastructure and Grid Modernization. Authorizes investments in the electric grid to improve reliability and resilience, incorporating renewable energy sources. Section 9: Implementation Timeline. Projects funded under this Act shall begin no later than January 1, 2022, with full implementation expected by 2026. This represents the largest infrastructure investment since the creation of the Interstate Highway System.",
+  "metadata": {
+    "type": "bill",
+    "congress": 117,
+    "bill_type": "hr",
+    "bill_number": 3684,
+    "sponsor": "Rep. DeFazio, Peter A.",
+    "introduced_date": "2021-06-04",
+    "status": "Became Public Law 117-58",
+    "subjects": ["Transportation", "Infrastructure", "Broadband", "Water systems"]
+  }
+}
