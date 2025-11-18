@@ -36,3 +36,20 @@ yarn-error.log*
 
 # OS
 Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# RAG specific
+results/
+data/vector_stores/
