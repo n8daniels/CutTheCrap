@@ -12,6 +12,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from rag.without_mcp.rag_system import TraditionalRAG
 from rag.with_mcp.rag_system import MCPEnhancedRAG
 from analysis.comparator import RAGComparator
+from analysis.visualizer import RAGVisualizer
 import time
 
 
@@ -208,6 +209,14 @@ def main():
     comparator.save_report(report_path)
 
     print(f"\n\nFull report saved to: {report_path}")
+
+    # Generate visualizations
+    print_header("GENERATING VISUALIZATIONS")
+    visualizer = RAGVisualizer(output_dir="results")
+    visualizer.generate_all_visualizations(
+        scenario2_metrics['traditional'],
+        scenario2_metrics['mcp_enhanced']
+    )
 
     print_header("KEY TAKEAWAYS")
     print("""

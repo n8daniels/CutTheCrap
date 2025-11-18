@@ -1,0 +1,38 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Project specific
+results/
+.env
+.env.local
+
+# Documentation (will be copied explicitly)
+*.md
+!RAG_COMPARISON_README.md
+!QUICKSTART.md
+!DELIVERY_SUMMARY.md
+
+# OS
+.DS_Store
+Thumbs.db
