@@ -1,11 +1,20 @@
 /**
  * MCP Client Service - Communicates with FedDocMCP server
+ *
+ * SECURITY CONTROLS APPLIED:
+ * - MCP server path validation (prevents command injection)
+ * - Filtered environment variables (prevents secret leakage)
+ * - Bill type validation (prevents SSRF)
+ *
+ * See: docs/security/llm-rag-mcp-security.md
  */
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { Bill, BillText, BillStatus, SearchBillsParams, DocumentGraph } from '@/types/document';
 import { config } from '@/lib/config';
+import { validateMCPServerPath, buildSecureEnv, validateBillType } from '@/security/mcp-config';
+import { logMCPToolCall } from '@/lib/audit-logger';
 
 export class FedDocMCPClient {
   private client: Client | null = null;
@@ -14,6 +23,8 @@ export class FedDocMCPClient {
 
   /**
    * Connect to FedDocMCP server
+   *
+   * SECURITY: Validates server path and filters environment variables
    */
   async connect(): Promise<void> {
     if (this.client) {
@@ -21,14 +32,21 @@ export class FedDocMCPClient {
     }
 
     try {
+      // SECURITY FIX: Validate MCP server path against allowlist
+      // Prevents command injection via FEDDOC_MCP_PATH environment variable
+      // See: docs/security/threat_model.md - Scenario 1
+      validateMCPServerPath(config.fedDocMcpPath);
+
+      // SECURITY FIX: Only pass allowlisted environment variables
+      // Prevents secret leakage via process inspection
+      // See: docs/security/threat_model.md - Scenario 5
+      const secureEnv = buildSecureEnv();
+
       // Create stdio transport to spawn Python MCP server
       this.transport = new StdioClientTransport({
         command: 'python',
         args: [config.fedDocMcpPath],
-        env: {
-          ...process.env,
-          CONGRESS_API_KEY: config.congressApiKey,
-        },
+        env: secureEnv, // SECURITY: Filtered env, not full process.env
       });
 
       // Create MCP client
@@ -174,18 +192,34 @@ export class FedDocMCPClient {
   }
 
   /**
-   * Call MCP tool with retry logic
+   * Call MCP tool with retry logic and audit logging
+   *
+   * SECURITY: All tool calls are logged for security monitoring
    */
   private async callTool(toolName: string, params: any, retries = 3): Promise<any> {
     if (!this.client) {
       throw new Error('MCP client not connected');
     }
 
+    const startTime = Date.now();
+    let lastError: any = null;
+
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         const result = await this.client.callTool({
           name: toolName,
           arguments: params,
+        });
+
+        const durationMs = Date.now() - startTime;
+
+        // SECURITY: Log successful MCP tool call
+        await logMCPToolCall({
+          toolName,
+          arguments: params,
+          result: 'success',
+          durationMs,
+          ipAddress: 'server', // MCP calls are server-side
         });
 
         // Parse JSON response from TextContent
@@ -198,7 +232,21 @@ export class FedDocMCPClient {
 
         return result.content;
       } catch (error) {
+        lastError = error;
+
         if (attempt === retries) {
+          const durationMs = Date.now() - startTime;
+
+          // SECURITY: Log failed MCP tool call
+          await logMCPToolCall({
+            toolName,
+            arguments: params,
+            result: 'failure',
+            durationMs,
+            ipAddress: 'server',
+            error: error instanceof Error ? error.message : String(error),
+          });
+
           throw error;
         }
 
@@ -211,7 +259,9 @@ export class FedDocMCPClient {
   }
 
   /**
-   * Parse bill ID into components
+   * Parse bill ID into components with security validation
+   *
+   * SECURITY: Validates bill type against allowlist
    */
   private parseBillId(billId: string): [number, string, number] {
     const parts = billId.split('/');
@@ -220,12 +270,16 @@ export class FedDocMCPClient {
     }
 
     const congress = parseInt(parts[0], 10);
-    const billType = parts[1];
     const billNumber = parseInt(parts[2], 10);
 
     if (isNaN(congress) || isNaN(billNumber)) {
       throw new Error(`Invalid bill ID format: ${billId}`);
     }
+
+    // SECURITY FIX: Validate bill type against allowlist
+    // Prevents SSRF via malicious bill type parameter
+    // See: docs/security/llm-rag-mcp-security.md - Section 2
+    const billType = validateBillType(parts[1]);
 
     return [congress, billType, billNumber];
   }

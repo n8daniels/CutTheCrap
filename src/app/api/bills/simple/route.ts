@@ -1,18 +1,48 @@
 /**
  * Simple Bill API - Fetches single bill without dependencies
  * GET /api/bills/simple?billId=118/hr/3684
+ *
+ * SECURITY CONTROLS APPLIED:
+ * - Rate limiting: 60 requests/minute
+ * - Bill ID format validation
+ *
+ * See: docs/security/threat_model.md - Scenario 2
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getMCPClient } from '@/services/mcp-client';
 import { getDocumentCache } from '@/lib/document-cache';
+import { RateLimitPresets } from '@/middleware/rate-limit';
+import { config } from '@/lib/config';
+import { logAPIRequest, getClientIP } from '@/lib/audit-logger';
 
 export async function GET(request: NextRequest) {
+  const startTime = Date.now();
+  const clientIP = getClientIP(request.headers);
+
+  // SECURITY FIX: Apply rate limiting
+  const rateLimitResponse = await RateLimitPresets.standard(request);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const billId = searchParams.get('billId');
 
     if (!billId) {
+      // SECURITY: Log validation error
+      await logAPIRequest({
+        endpoint: '/api/bills/simple',
+        method: 'GET',
+        parameters: {},
+        result: 'failure',
+        durationMs: Date.now() - startTime,
+        ipAddress: clientIP,
+        statusCode: 400,
+        error: 'Missing billId parameter',
+      });
+
       return NextResponse.json(
         { error: 'billId parameter is required' },
         { status: 400 }
@@ -21,6 +51,18 @@ export async function GET(request: NextRequest) {
 
     // Validate format
     if (!/^\d+\/[a-z]+\/\d+$/.test(billId)) {
+      // SECURITY: Log validation error
+      await logAPIRequest({
+        endpoint: '/api/bills/simple',
+        method: 'GET',
+        parameters: { billId },
+        result: 'failure',
+        durationMs: Date.now() - startTime,
+        ipAddress: clientIP,
+        statusCode: 400,
+        error: 'Invalid bill ID format',
+      });
+
       return NextResponse.json(
         { error: 'Invalid bill ID format. Expected: congress/type/number' },
         { status: 400 }
@@ -79,6 +121,17 @@ export async function GET(request: NextRequest) {
 
     await cache.set(cacheKey, simpleGraph, 604800);
 
+    // SECURITY: Log successful API request
+    await logAPIRequest({
+      endpoint: '/api/bills/simple',
+      method: 'GET',
+      parameters: { billId },
+      result: 'success',
+      durationMs: Date.now() - startTime,
+      ipAddress: clientIP,
+      statusCode: 200,
+    });
+
     return NextResponse.json({
       bill,
       metadata: {
@@ -88,8 +141,25 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching bill:', error);
 
+    // SECURITY: Log internal error
+    await logAPIRequest({
+      endpoint: '/api/bills/simple',
+      method: 'GET',
+      parameters: {},
+      result: 'failure',
+      durationMs: Date.now() - startTime,
+      ipAddress: clientIP,
+      statusCode: 500,
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    // SECURITY: Don't expose internal error details in production
+    const errorMessage = config.isProduction
+      ? 'An error occurred while fetching the bill'
+      : String(error);
+
     return NextResponse.json(
-      { error: 'Failed to fetch bill', details: String(error) },
+      { error: errorMessage },
       { status: 500 }
     );
   }
