@@ -9,7 +9,7 @@ import sys
 import json
 import asyncio
 import logging
-from typing import Any, Optional
+from typing import Any
 import requests
 from mcp.server import Server
 from mcp.server.stdio import stdio_server

@@ -1,5 +1,7 @@
 # FedDocMCP Setup Guide
 
+**Note:** The FedDocMCP server is included locally in `packages/feddoc-mcp/`. You can optionally replace it with your own repo at https://github.com/n8daniels/FedDocMCP.git once it's set up.
+
 ## Quick Start
 
 ### 1. Get a Congress.gov API Key
