@@ -22,7 +22,7 @@ This project prioritizes:
 - Developing custom AI behaviors tailored to your needs
 - Focusing on **how to train AI effectively**, not just what data to feed it
 
-The documents are just input—the real value is in training AI to extract meaningful insights from them.
+The documents are just input the real value is in training AI to extract meaningful insights from them.
 
 ## 🛠️ Tech Stack
 
