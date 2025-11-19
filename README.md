@@ -4,7 +4,7 @@ An AI-powered analysis platform that learns from your data to deliver actionable
 
 ## 🎯 Purpose
 
-CutTheCrap isn't just another document processing tool—it's a platform for building **trainable AI models** that understand your specific use case. The focus is on **teaching AI to analyze data intelligently**, not just parsing documents.
+CutTheCrap isn't just another document processing tool, it's a platform for building **trainable AI models** that understand your specific use case. The focus is on **teaching AI to analyze data intelligently**, not just parsing documents.
 
 ## 🚀 Status
 
