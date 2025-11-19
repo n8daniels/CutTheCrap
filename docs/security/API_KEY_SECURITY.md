@@ -33,6 +33,87 @@ CutTheCrap uses the **Congress.gov API** to fetch federal legislative data. API 
 
 ---
 
+## Multiple API Keys (Best Practice)
+
+**⚠️ CRITICAL**: You should use **separate API keys for different environments**.
+
+### Recommended Setup
+
+| Environment | API Key Name | Where Stored | Who Uses | Quota |
+|-------------|--------------|--------------|----------|-------|
+| **Development** | `CutTheCrap - Dev` | Local `.env` file | Developers locally | Separate from prod |
+| **Production** | `CutTheCrap - Prod` | Vercel env vars | Live users | Protected prod quota |
+| **Staging** (optional) | `CutTheCrap - Staging` | Vercel preview env | CI/CD, PR previews | Testing quota |
+
+### Why Separate Keys?
+
+**1. Quota Isolation**
+```
+❌ Single Key: Dev testing exhausts quota → Production fails
+✅ Separate Keys: Dev uses dev quota → Production unaffected
+```
+
+**2. Security Blast Radius**
+```
+❌ Single Key: Leak dev key → Must rotate prod → Downtime
+✅ Separate Keys: Leak dev key → Rotate dev only → Prod safe
+```
+
+**3. Debugging**
+```
+❌ Single Key: "Which environment caused quota spike?" 🤷
+✅ Separate Keys: "Dev key hit quota - it's testing" ✅
+```
+
+**4. Safe Rotation**
+```
+❌ Single Key: Rotate → Hope prod works
+✅ Separate Keys: Test dev rotation → Then rotate prod safely
+```
+
+### How to Get Multiple Keys
+
+```bash
+# Visit Congress.gov API portal
+open https://api.congress.gov/sign-up/
+
+# Create keys with descriptive names:
+# 1. "CutTheCrap - Development - 2025-01"
+# 2. "CutTheCrap - Production - 2025-01"
+# 3. "CutTheCrap - Staging - 2025-01" (optional)
+
+# Copy each key to appropriate location:
+# - Dev key → Your local .env file
+# - Prod key → Vercel environment variables
+# - Staging key → Vercel preview environment
+```
+
+### Configuration
+
+**Local `.env`** (development key):
+```bash
+CONGRESS_API_KEY=your_DEV_key_here
+NODE_ENV=development
+```
+
+**Vercel** (production key):
+```bash
+# Set via CLI
+vercel env add CONGRESS_API_KEY production
+# Paste production key when prompted
+
+# Or via dashboard:
+# Settings → Environment Variables → Production
+```
+
+**Key Naming Convention**:
+- ✅ `CutTheCrap - Production - 2025-01`
+- ✅ `CutTheCrap - Dev - John Doe`
+- ✅ `CutTheCrap - Staging - CI/CD`
+- ❌ `key1`, `key2`, `production` (unclear)
+
+---
+
 ## Security Controls
 
 ### 1. Storage ✅
