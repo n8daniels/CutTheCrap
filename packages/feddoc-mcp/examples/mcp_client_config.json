@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "feddocmcp": {
+      "command": "python",
+      "args": [
+        "/ABSOLUTE/PATH/TO/FedDocMCP/src/server.py"
+      ],
+      "env": {
+        "CONGRESS_API_KEY": "your_congress_api_key_here"
+      }
+    }
+  }
+}

@@ -19,8 +19,8 @@
 
 ## Overview
 
-CutTheCrap uses the **Congress.gov API** to fetch federal legislative data. API keys must be protected as they:
-- Have usage quotas (5,000 requests/hour)
+CutTheCrap uses **multiple federal government APIs** to fetch comprehensive legislative and regulatory data through the FedDocMCP server. API keys must be protected as they:
+- Have usage quotas (varies by API)
 - Can be rate-limited or revoked if abused
 - Could expose your identity if leaked
 
@@ -28,8 +28,13 @@ CutTheCrap uses the **Congress.gov API** to fetch federal legislative data. API 
 
 | Key | Purpose | Quota | Required |
 |-----|---------|-------|----------|
-| `CONGRESS_API_KEY` | Congress.gov API access | 5,000 req/hour | ✅ Yes |
+| `CONGRESS_API_KEY` | Congress.gov API - Bills, votes, committee data | 5,000 req/hour | ✅ Yes |
+| `GOVINFO_API_KEY` | GovInfo.gov API - 39+ document collections | 1,000 req/hour | ⚠️ Optional* |
 | ~~`OPENAI_API_KEY`~~ | ❌ Removed (not used) | N/A | ❌ No |
+
+*GovInfo is optional but recommended for accessing Congressional Record, court opinions, hearings, and more.
+
+**Federal Register API** requires no key - it's completely free and open!
 
 ---
 
@@ -39,11 +44,18 @@ CutTheCrap uses the **Congress.gov API** to fetch federal legislative data. API 
 
 ### Recommended Setup
 
-| Environment | API Key Name | Where Stored | Who Uses | Quota |
-|-------------|--------------|--------------|----------|-------|
-| **Development** | `CutTheCrap - Dev` | Local `.env` file | Developers locally | Separate from prod |
-| **Production** | `CutTheCrap - Prod` | Vercel env vars | Live users | Protected prod quota |
-| **Staging** (optional) | `CutTheCrap - Staging` | Vercel preview env | CI/CD, PR previews | Testing quota |
+You need **4 API keys total** (2 per API service):
+
+| API Service | Environment | Key Name | Where Stored | Quota |
+|-------------|-------------|----------|--------------|-------|
+| **Congress.gov** | Development | `CutTheCrap - Congress - Dev` | Local `.env` | 5,000 req/hr (dev) |
+| **Congress.gov** | Production | `CutTheCrap - Congress - Prod` | Vercel env vars | 5,000 req/hr (prod) |
+| **GovInfo.gov** | Development | `CutTheCrap - GovInfo - Dev` | Local `.env` | 1,000 req/hr (dev) |
+| **GovInfo.gov** | Production | `CutTheCrap - GovInfo - Prod` | Vercel env vars | 1,000 req/hr (prod) |
+
+**Optional Staging** (6 keys total if you want staging):
+- `CutTheCrap - Congress - Staging` → Vercel preview env
+- `CutTheCrap - GovInfo - Staging` → Vercel preview env
 
 ### Why Separate Keys?
 
@@ -73,43 +85,65 @@ CutTheCrap uses the **Congress.gov API** to fetch federal legislative data. API 
 
 ### How to Get Multiple Keys
 
+**Congress.gov API Keys** (2 required):
 ```bash
 # Visit Congress.gov API portal
 open https://api.congress.gov/sign-up/
 
-# Create keys with descriptive names:
-# 1. "CutTheCrap - Development - 2025-01"
-# 2. "CutTheCrap - Production - 2025-01"
-# 3. "CutTheCrap - Staging - 2025-01" (optional)
+# Create 2 keys with descriptive names:
+# 1. "CutTheCrap - Congress - Development - 2025-01"
+# 2. "CutTheCrap - Congress - Production - 2025-01"
 
-# Copy each key to appropriate location:
-# - Dev key → Your local .env file
-# - Prod key → Vercel environment variables
-# - Staging key → Vercel preview environment
+# Save keys immediately - shown only once!
 ```
+
+**GovInfo.gov API Keys** (2 optional but recommended):
+```bash
+# Visit API.data.gov signup
+open https://api.data.gov/signup/
+
+# Create 2 keys with descriptive names:
+# 1. "CutTheCrap - GovInfo - Development - 2025-01"
+# 2. "CutTheCrap - GovInfo - Production - 2025-01"
+
+# Save keys immediately - shown only once!
+```
+
+**Where to Store**:
+- **Dev keys** → Your local `.env` file
+- **Prod keys** → Vercel environment variables
 
 ### Configuration
 
-**Local `.env`** (development key):
+**Local `.env`** (development keys):
 ```bash
-CONGRESS_API_KEY=your_DEV_key_here
+# Required: Congress.gov API
+CONGRESS_API_KEY=your_DEV_congress_key_here
+
+# Optional but recommended: GovInfo.gov API
+GOVINFO_API_KEY=your_DEV_govinfo_key_here
+
+# Environment
 NODE_ENV=development
 ```
 
-**Vercel** (production key):
+**Vercel** (production keys):
 ```bash
 # Set via CLI
 vercel env add CONGRESS_API_KEY production
-# Paste production key when prompted
+# Paste Congress.gov production key when prompted
+
+vercel env add GOVINFO_API_KEY production
+# Paste GovInfo.gov production key when prompted
 
 # Or via dashboard:
-# Settings → Environment Variables → Production
+# Settings → Environment Variables → Production → Add both keys
 ```
 
 **Key Naming Convention**:
-- ✅ `CutTheCrap - Production - 2025-01`
-- ✅ `CutTheCrap - Dev - John Doe`
-- ✅ `CutTheCrap - Staging - CI/CD`
+- ✅ `CutTheCrap - Congress - Production - 2025-01`
+- ✅ `CutTheCrap - GovInfo - Dev - 2025-01`
+- ✅ `CutTheCrap - Congress - Staging - CI/CD`
 - ❌ `key1`, `key2`, `production` (unclear)
 
 ---
@@ -165,7 +199,8 @@ await validateConfig({ testApiKey: true });
 **Only Allowlisted Variables Passed** (`src/security/mcp-config.ts:24-27`):
 ```typescript
 allowedEnvVars: [
-  'CONGRESS_API_KEY',  // Required for API
+  'CONGRESS_API_KEY',  // Required for Congress.gov API
+  'GOVINFO_API_KEY',   // Required for GovInfo.gov API
   'NODE_ENV',          // Required for env detection
 ] as const
 ```
@@ -334,13 +369,27 @@ function getApiKey(): string {
 
 ## Quota Monitoring
 
-### Congress.gov API Limits
+### API Rate Limits
 
+**Congress.gov API**:
 | Limit | Value | Notes |
 |-------|-------|-------|
 | **Requests/hour** | 5,000 | Per API key |
 | **Requests/day** | ~120,000 | Not enforced, but respect fair use |
 | **Concurrent requests** | 10 | Recommended limit |
+
+**GovInfo.gov API** (via API.data.gov):
+| Limit | Value | Notes |
+|-------|-------|-------|
+| **Requests/hour** | 1,000 | Per API key (default tier) |
+| **Requests/day** | ~40,000 | Can request increase |
+| **Concurrent requests** | 5 | Recommended limit |
+
+**Federal Register API**:
+| Limit | Value | Notes |
+|-------|-------|-------|
+| **Requests/hour** | Unlimited | No authentication required |
+| **Fair use** | Yes | Be respectful, use caching |
 
 ### Monitoring Dashboard
 
@@ -582,8 +631,18 @@ secrets:
 
 ## References
 
+### API Documentation
 - [Congress.gov API Documentation](https://api.congress.gov/v3/app/)
 - [Congress.gov Sign Up](https://api.congress.gov/sign-up/)
+- [GovInfo.gov API Documentation](https://api.govinfo.gov/docs/)
+- [API.data.gov Sign Up](https://api.data.gov/signup/) (for GovInfo keys)
+- [Federal Register API Documentation](https://www.federalregister.gov/developers/documentation/api/v1) (no key needed)
+
+### FedDocMCP Documentation
+- [FedDocMCP README](../../packages/feddoc-mcp/README.md) - Full MCP server documentation
+- [FedDocMCP GitHub](https://github.com/n8daniels/FedDocMCP) - Separate repository
+
+### Security Documentation
 - [SECURITY.md](../../SECURITY.md) - High-level security policy
 - [llm-rag-mcp-security.md](./llm-rag-mcp-security.md) - Detailed threat analysis
 - [threat_model.md](./threat_model.md) - STRIDE threat modeling

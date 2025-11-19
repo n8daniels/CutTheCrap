@@ -22,8 +22,9 @@ export const MCP_SECURITY_CONFIG = {
    * See: docs/security/threat_model.md - Scenario 5
    */
   allowedEnvVars: [
-    'CONGRESS_API_KEY',
-    'NODE_ENV',
+    'CONGRESS_API_KEY',  // Congress.gov API access
+    'GOVINFO_API_KEY',   // GovInfo.gov API access
+    'NODE_ENV',          // Environment detection
   ] as const,
 
   /**
