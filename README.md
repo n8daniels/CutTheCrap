@@ -1,6 +1,12 @@
 # CutTheCrap
 
+[![Development Status](https://img.shields.io/badge/status-alpha-orange.svg)](https://github.com/n8daniels/CutTheCrap)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+
 An AI-powered analysis platform for federal legislation that delivers actionable insights without the fluff.
+
+> **⚠️ ACTIVE DEVELOPMENT**: This project is in alpha stage and under active development. APIs may change, features are being added, and there may be bugs. We welcome early adopters and contributors!
 
 ## 🎯 Purpose
 
@@ -8,15 +14,30 @@ CutTheCrap intelligently analyzes federal bills and their complete dependency gr
 
 ## 🚀 Status
 
-**v1.0 - Production Ready**
+**v0.3.0-alpha - Active Development**
 
-Core features implemented:
-- ✅ MCP integration for federal document access
-- ✅ Intelligent dependency graph building
-- ✅ Smart caching with 80%+ hit rates
-- ✅ AI context optimization (80% token reduction)
-- ✅ Full Next.js 14 web application
-- ✅ TypeScript throughout for type safety
+### ✅ Implemented
+- MCP integration for federal document access (Congress.gov, GovInfo.gov, Federal Register)
+- Intelligent dependency graph building
+- Smart caching with 80%+ hit rates
+- AI context optimization (80% token reduction)
+- Full Next.js 14 web application
+- TypeScript throughout for type safety
+- Comprehensive security controls (P0/P1 vulnerabilities fixed)
+
+### 🚧 In Progress
+- Deployment to Vercel (coming soon)
+- Enhanced GovInfo.gov integration testing
+- Performance optimization and monitoring
+- Additional API endpoints
+
+### 📋 Planned
+- Real-time bill updates via webhooks
+- AI-generated summaries of dependencies
+- Interactive dependency graph visualization (D3.js)
+- Bill comparison view (side-by-side)
+- Public API for third-party access
+- Predictive analytics (passage likelihood)
 
 ## 🧠 Key Innovation
 
@@ -63,8 +84,13 @@ Traditional approach: User asks about a bill → System fetches only that bill �
 - **Styling:** Tailwind CSS
 - **Integration:** Model Context Protocol (MCP)
 - **Caching:** Redis / In-memory
-- **API:** Congress.gov via FedDocMCP
-- **Visualization:** D3.js, React Force Graph
+- **APIs:**
+  - Congress.gov (bills, votes, committees)
+  - GovInfo.gov (39+ document collections)
+  - Federal Register (regulations, rules)
+  - All via [FedDocMCP](https://github.com/n8daniels/FedDocMCP) v0.3.0
+- **Visualization:** D3.js, React Force Graph (planned)
+- **Security:** Comprehensive input validation, rate limiting, audit logging
 
 ## 📦 Quick Start
 
@@ -78,7 +104,9 @@ npm install
 
 # Set up environment variables
 cp .env.example .env
-# Edit .env and add your Congress API key
+# Edit .env and add your API keys:
+# - CONGRESS_API_KEY (required - get at https://api.congress.gov/sign-up/)
+# - GOVINFO_API_KEY (optional - get at https://api.data.gov/signup/)
 
 # Start development server
 npm run dev
@@ -86,7 +114,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to see the application.
 
-For detailed setup instructions, see [SETUP.md](SETUP.md).
+**For production deployment**, see [DEPLOY_NOW.md](DEPLOY_NOW.md) for step-by-step Vercel deployment guide.
 
 ## 📖 Usage
 
@@ -136,18 +164,21 @@ Frontend (Next.js) → API Routes → Document Graph Builder
                                              Congress.gov API
 ```
 
-## 🔮 Future Enhancements
-
-- [ ] Real-time bill updates via webhooks
-- [ ] AI-generated summaries of dependencies
-- [ ] Dependency graph visualization (D3.js)
-- [ ] Bill comparison view (side-by-side)
-- [ ] Public API for third-party access
-- [ ] Predictive analytics (passage likelihood)
-
 ## 🤝 Contributing
 
-Contributions, issues, and feature requests are welcome! See [SETUP.md](SETUP.md) for development guidelines.
+**We welcome contributions!** This project is in active development and there are many ways to help:
+
+- 🐛 **Report bugs** - Found an issue? [Open an issue](https://github.com/n8daniels/CutTheCrap/issues)
+- 💡 **Suggest features** - Have an idea? We'd love to hear it
+- 📝 **Improve docs** - Documentation can always be better
+- 🔧 **Submit PRs** - Code contributions are welcome
+
+**Development Setup:**
+1. See [DEPLOY_NOW.md](DEPLOY_NOW.md) for local development setup
+2. Check out the [Security Documentation](docs/security/) for security guidelines
+3. Review [FedDocMCP](https://github.com/n8daniels/FedDocMCP) for MCP integration details
+
+**⚠️ Alpha Status**: Expect breaking changes between versions. We'll do our best to document them in the [CHANGELOG](CHANGELOG.md) (coming soon).
 
 ## 📝 License
 
