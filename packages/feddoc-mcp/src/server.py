@@ -1,203 +1,213 @@
 #!/usr/bin/env python3
 """
-FedDocMCP Server - Model Context Protocol server for federal documents
-Provides access to Congress.gov API for bill data
+FedDocMCP - Model Context Protocol Server for Congressional Bill Data.
+
+This server provides MCP tools for accessing Congress.gov API data through
+Claude Desktop and other MCP clients.
 """
 
-import os
 import sys
-import json
-import asyncio
 import logging
-from typing import Any
-import requests
+import asyncio
+from typing import Any, cast, Dict
+
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+from mcp.types import (
+    Tool,
+    TextContent,
+    ImageContent,
+    EmbeddedResource,
+)
 
-# Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger('feddoc-mcp')
+from .config import get_config, ConfigError
+from .tools.bills import ALL_TOOLS as BILLS_TOOLS, TOOL_HANDLERS as BILLS_HANDLERS
+from .tools.federal_register import (
+    ALL_TOOLS as FED_REG_TOOLS,
+    TOOL_HANDLERS as FED_REG_HANDLERS,
+)
+from .tools.govinfo import (
+    ALL_TOOLS as GOVINFO_TOOLS,
+    TOOL_HANDLERS as GOVINFO_HANDLERS,
+)
+from .tools.system import ALL_TOOLS as SYSTEM_TOOLS, TOOL_HANDLERS as SYSTEM_HANDLERS
+from .monitoring import monitored_tool
+from .utils.logging import setup_logging
 
-# Congress API configuration
-CONGRESS_API_KEY = os.getenv('CONGRESS_API_KEY', '')
-CONGRESS_API_BASE = 'https://api.congress.gov/v3'
 
-if not CONGRESS_API_KEY:
-    logger.warning("CONGRESS_API_KEY not set! API calls will fail.")
+logger = logging.getLogger(__name__)
 
-# Initialize MCP server
-app = Server("feddoc-mcp")
 
-def make_congress_request(endpoint: str, params: dict = None) -> dict:
-    """Make a request to Congress.gov API"""
-    if not CONGRESS_API_KEY:
-        return {"error": "CONGRESS_API_KEY not configured"}
+# Combine all tools and handlers
+ALL_TOOLS = BILLS_TOOLS + FED_REG_TOOLS + GOVINFO_TOOLS + SYSTEM_TOOLS
+TOOL_HANDLERS = {
+    **BILLS_HANDLERS,
+    **FED_REG_HANDLERS,
+    **GOVINFO_HANDLERS,
+    **SYSTEM_HANDLERS,
+}
 
-    url = f"{CONGRESS_API_BASE}/{endpoint}"
-    params = params or {}
-    params['api_key'] = CONGRESS_API_KEY
-    params['format'] = 'json'
+# Wrap all tool handlers with monitoring (except health check to avoid recursion)
+for tool_name, handler in list(TOOL_HANDLERS.items()):
+    if tool_name != "get_server_health":  # Don't monitor the health check itself
+        TOOL_HANDLERS[tool_name] = monitored_tool(handler)
 
+
+class FedDocMCPServer:
+    """
+    FedDocMCP Server implementation.
+
+    Handles MCP protocol communication and routes tool calls to appropriate handlers.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the MCP server."""
+        # Load configuration
+        try:
+            self.config = get_config()
+            logger.info("Configuration loaded successfully")
+        except ConfigError as e:
+            logger.error(f"Configuration error: {e}")
+            sys.exit(1)
+
+        # Create MCP server instance
+        self.server = Server("feddocmcp")
+        logger.info("FedDocMCP server initialized")
+
+        # Register handlers
+        self._register_handlers()
+
+    def _register_handlers(self) -> None:
+        """Register MCP protocol handlers."""
+
+        @self.server.list_tools()
+        async def list_tools() -> list[Tool]:
+            """
+            List available tools.
+
+            Returns:
+                List of tool definitions
+            """
+            logger.debug("list_tools called")
+
+            tools = []
+            for tool_schema in ALL_TOOLS:
+                tools.append(
+                    Tool(
+                        name=cast(str, tool_schema["name"]),
+                        description=cast(str, tool_schema["description"]),
+                        inputSchema=cast(Dict[str, Any], tool_schema["inputSchema"]),
+                    )
+                )
+
+            logger.info(f"Returning {len(tools)} tools")
+            return tools
+
+        @self.server.call_tool()
+        async def call_tool(
+            name: str, arguments: Any
+        ) -> list[TextContent | ImageContent | EmbeddedResource]:
+            """
+            Handle tool execution requests.
+
+            Args:
+                name: Tool name
+                arguments: Tool arguments
+
+            Returns:
+                List of content blocks
+            """
+            logger.info(f"Tool called: {name}")
+            logger.debug(f"Arguments: {arguments}")
+
+            # Check if tool exists
+            if name not in TOOL_HANDLERS:
+                logger.error(f"Unknown tool: {name}")
+                return [TextContent(type="text", text=f"Error: Unknown tool '{name}'")]
+
+            # Get handler
+            handler = TOOL_HANDLERS[name]
+
+            try:
+                # Call handler
+                result = await handler(arguments)
+
+                # Convert to MCP content types
+                content: list[TextContent | ImageContent | EmbeddedResource] = []
+                for item in result:
+                    if item["type"] == "text":
+                        content.append(TextContent(type="text", text=item["text"]))
+                    # Add support for other content types as needed
+
+                logger.info(f"Tool {name} completed successfully")
+                return content
+
+            except Exception as e:
+                logger.exception(f"Error executing tool {name}")
+                return [
+                    TextContent(type="text", text=f"Error executing {name}: {str(e)}")
+                ]
+
+    async def run(self) -> None:
+        """
+        Run the MCP server.
+
+        Starts the server with stdio transport and handles shutdown.
+        """
+        logger.info("Starting FedDocMCP server...")
+
+        try:
+            # Run server with stdio transport
+            async with stdio_server() as (read_stream, write_stream):
+                logger.info("Server running with stdio transport")
+                await self.server.run(
+                    read_stream,
+                    write_stream,
+                    self.server.create_initialization_options(),
+                )
+
+        except KeyboardInterrupt:
+            logger.info("Server interrupted by user")
+
+        except Exception:
+            logger.exception("Server error")
+            raise
+
+        finally:
+            logger.info("Server shutdown complete")
+
+
+async def main() -> None:
+    """Run the main server entry point."""
+    # Configure structured logging
+    import os
+
+    log_level = os.getenv("LOG_LEVEL", "INFO")
+    use_json = os.getenv("LOG_FORMAT", "json").lower() == "json"
+    log_file = os.getenv("LOG_FILE")  # Optional log file path
+
+    setup_logging(level=log_level, use_json=use_json, log_file=log_file)
+    logger.info(
+        "Logging configured",
+        extra={"level": log_level, "format": "json" if use_json else "text"},
+    )
+
+    # Create and run server
+    server = FedDocMCPServer()
+    await server.run()
+
+
+def cli_main() -> None:
+    """CLI entry point (for setuptools console_scripts)."""
     try:
-        logger.info(f"Making request to: {endpoint}")
-        response = requests.get(url, params=params, timeout=30)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Congress API error: {e}")
-        return {"error": str(e)}
-
-@app.list_tools()
-async def list_tools() -> list[Tool]:
-    """List available MCP tools"""
-    return [
-        Tool(
-            name="search_bills",
-            description="Search for bills in Congress",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "query": {"type": "string", "description": "Search query"},
-                    "congress": {"type": "number", "description": "Congress number (e.g., 118)"},
-                    "limit": {"type": "number", "description": "Max results", "default": 20}
-                }
-            }
-        ),
-        Tool(
-            name="get_bill_text",
-            description="Get full text of a bill",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "congress": {"type": "number", "description": "Congress number"},
-                    "bill_type": {"type": "string", "description": "Bill type (hr, s, etc.)"},
-                    "bill_number": {"type": "number", "description": "Bill number"}
-                },
-                "required": ["congress", "bill_type", "bill_number"]
-            }
-        ),
-        Tool(
-            name="get_bill_status",
-            description="Get current status and details of a bill",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "congress": {"type": "number", "description": "Congress number"},
-                    "bill_type": {"type": "string", "description": "Bill type (hr, s, etc.)"},
-                    "bill_number": {"type": "number", "description": "Bill number"}
-                },
-                "required": ["congress", "bill_type", "bill_number"]
-            }
-        )
-    ]
-
-@app.call_tool()
-async def call_tool(name: str, arguments: Any) -> list[TextContent]:
-    """Handle tool calls"""
-    logger.info(f"Tool called: {name} with args: {arguments}")
-
-    try:
-        if name == "search_bills":
-            return await search_bills(arguments)
-        elif name == "get_bill_text":
-            return await get_bill_text(arguments)
-        elif name == "get_bill_status":
-            return await get_bill_status(arguments)
-        else:
-            return [TextContent(type="text", text=json.dumps({"error": f"Unknown tool: {name}"}))]
-    except Exception as e:
-        logger.error(f"Error in {name}: {e}", exc_info=True)
-        return [TextContent(type="text", text=json.dumps({"error": str(e)}))]
-
-async def search_bills(args: dict) -> list[TextContent]:
-    """Search for bills"""
-    query = args.get('query', '')
-    congress = args.get('congress')
-    limit = args.get('limit', 20)
-
-    # Build endpoint
-    if congress:
-        endpoint = f"bill/{congress}"
-    else:
-        endpoint = "bill"
-
-    params = {
-        'limit': limit
-    }
-
-    if query:
-        params['q'] = query
-
-    result = make_congress_request(endpoint, params)
-
-    return [TextContent(type="text", text=json.dumps(result))]
-
-async def get_bill_text(args: dict) -> list[TextContent]:
-    """Get full text of a bill"""
-    congress = args['congress']
-    bill_type = args['bill_type']
-    bill_number = args['bill_number']
-
-    # First get bill details to find text URL
-    endpoint = f"bill/{congress}/{bill_type}/{bill_number}"
-    bill_data = make_congress_request(endpoint)
-
-    if 'error' in bill_data:
-        return [TextContent(type="text", text=json.dumps(bill_data))]
-
-    # Try to get text versions
-    text_endpoint = f"bill/{congress}/{bill_type}/{bill_number}/text"
-    text_data = make_congress_request(text_endpoint)
-
-    # Combine bill info with text
-    result = {
-        "id": f"{congress}/{bill_type}/{bill_number}",
-        "bill": bill_data.get('bill', {}),
-        "text": text_data.get('textVersions', []),
-        "format": "json"
-    }
-
-    return [TextContent(type="text", text=json.dumps(result))]
-
-async def get_bill_status(args: dict) -> list[TextContent]:
-    """Get bill status and details"""
-    congress = args['congress']
-    bill_type = args['bill_type']
-    bill_number = args['bill_number']
-
-    endpoint = f"bill/{congress}/{bill_type}/{bill_number}"
-    result = make_congress_request(endpoint)
-
-    if 'error' not in result and 'bill' in result:
-        bill = result['bill']
-        status_data = {
-            "id": f"{congress}/{bill_type}/{bill_number}",
-            "title": bill.get('title', ''),
-            "status": bill.get('latestAction', {}).get('text', 'Unknown'),
-            "last_action": bill.get('latestAction', {}).get('text', ''),
-            "last_action_date": bill.get('latestAction', {}).get('actionDate', ''),
-            "introduced_date": bill.get('introducedDate', ''),
-            "sponsor": bill.get('sponsors', [{}])[0].get('fullName', '') if bill.get('sponsors') else '',
-            "full_data": bill
-        }
-        return [TextContent(type="text", text=json.dumps(status_data))]
-
-    return [TextContent(type="text", text=json.dumps(result))]
-
-async def main():
-    """Run the MCP server"""
-    logger.info("Starting FedDocMCP server...")
-
-    if not CONGRESS_API_KEY:
-        logger.error("CONGRESS_API_KEY environment variable not set!")
-        logger.error("Get your API key at: https://api.congress.gov/sign-up/")
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Interrupted by user")
+        sys.exit(0)
+    except Exception:
+        logger.exception("Fatal error")
         sys.exit(1)
 
-    logger.info("FedDocMCP server ready")
-
-    async with stdio_server() as (read_stream, write_stream):
-        await app.run(read_stream, write_stream, app.create_initialization_options())
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    cli_main()

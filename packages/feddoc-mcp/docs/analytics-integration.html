@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FedDocMCP Analytics Integration Example</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .metric-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #1e3a8a;
+        }
+        .metric-label {
+            color: #6b7280;
+            margin-top: 5px;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        .status.healthy { background: #10b981; color: white; }
+        .status.warning { background: #f59e0b; color: white; }
+        .status.error { background: #ef4444; color: white; }
+    </style>
+</head>
+<body>
+    <h1>FedDocMCP Live Analytics</h1>
+    <p>Real-time metrics from FedDocMCP servers worldwide</p>
+
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <div class="metric-value" id="cache-hit-rate">--</div>
+            <div class="metric-label">Cache Hit Rate</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-value" id="avg-response-time">--</div>
+            <div class="metric-label">Avg Response Time (ms)</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-value" id="total-requests">--</div>
+            <div class="metric-label">Total Requests (24h)</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-label">Server Status</div>
+            <span class="status healthy" id="status">✅ HEALTHY</span>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <h3>Tool Usage</h3>
+        <div id="tool-usage"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, onValue, query, orderByChild, limitToLast } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        // Firebase configuration (replace with your config)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "feddocmcp.firebaseapp.com",
+            databaseURL: "https://feddocmcp-default-rtdb.firebaseio.com",
+            projectId: "feddocmcp",
+            storageBucket: "feddocmcp.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Listen for metrics updates
+        const metricsRef = ref(database, 'metrics');
+        const recentMetricsQuery = query(metricsRef, orderByChild('timestamp'), limitToLast(100));
+
+        onValue(recentMetricsQuery, (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+
+            // Convert to array and aggregate
+            const metrics = Object.values(data);
+            const latest = metrics[metrics.length - 1];
+
+            // Update UI
+            document.getElementById('cache-hit-rate').textContent =
+                `${latest.cache_hit_rate || 0}%`;
+
+            document.getElementById('avg-response-time').textContent =
+                `${Math.round(latest.avg_response_time_ms || 0)}ms`;
+
+            document.getElementById('total-requests').textContent =
+                latest.total_requests || 0;
+
+            // Tool usage breakdown
+            if (latest.tool_calls) {
+                const toolUsageHtml = Object.entries(latest.tool_calls)
+                    .map(([tool, count]) => `
+                        <div style="margin: 10px 0;">
+                            <strong>${tool}</strong>: ${count} calls
+                        </div>
+                    `)
+                    .join('');
+                document.getElementById('tool-usage').innerHTML = toolUsageHtml;
+            }
+
+            // Update status based on metrics
+            const statusEl = document.getElementById('status');
+            if (latest.error_count > 10) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '❌ ERRORS';
+            } else if (latest.avg_response_time_ms > 200) {
+                statusEl.className = 'status warning';
+                statusEl.textContent = '⚠️ SLOW';
+            } else {
+                statusEl.className = 'status healthy';
+                statusEl.textContent = '✅ HEALTHY';
+            }
+        });
+
+        // Aggregate metrics from last 24 hours
+        function aggregateLast24Hours(metrics) {
+            const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+            const recent = metrics.filter(m => m.timestamp > cutoff);
+
+            return {
+                total_requests: recent.reduce((sum, m) => sum + (m.total_requests || 0), 0),
+                avg_cache_hit_rate: recent.reduce((sum, m) => sum + (m.cache_hit_rate || 0), 0) / recent.length,
+                avg_response_time: recent.reduce((sum, m) => sum + (m.avg_response_time_ms || 0), 0) / recent.length,
+            };
+        }
+    </script>
+</body>
+</html>

@@ -1,30 +1,53 @@
 # 🚀 Deploy CutTheCrap to Vercel - Tomorrow Morning Guide
 
-**Time Required:** 30 minutes
+**Time Required:** 40 minutes
 **Cost:** $0/month (Vercel free tier)
 
 ---
 
 ## ☕ Morning Checklist (Do This Over Coffee)
 
-### Step 1: Get API Keys (10 minutes)
+### Step 1: Get API Keys (15 minutes)
+
+You need **4 API keys total** from 2 different services:
+
+#### Congress.gov API Keys (Required)
 
 ```bash
 # Open Congress.gov API signup
 open https://api.congress.gov/sign-up/
 ```
 
-**Create TWO API keys** (takes 5 min each):
+**Create TWO keys:**
 
 1. **Development Key**
-   - Name: `CutTheCrap - Development - 2025-01`
+   - Name: `CutTheCrap - Congress - Development - 2025-01`
    - Copy key → Save to notes app
 
 2. **Production Key**
-   - Name: `CutTheCrap - Production - 2025-01`
+   - Name: `CutTheCrap - Congress - Production - 2025-01`
    - Copy key → Save to notes app
 
-**✅ You should now have 2 API keys ready**
+#### GovInfo.gov API Keys (Optional but Recommended)
+
+```bash
+# Open API.data.gov signup
+open https://api.data.gov/signup/
+```
+
+**Create TWO keys:**
+
+3. **Development Key**
+   - Name: `CutTheCrap - GovInfo - Development - 2025-01`
+   - Copy key → Save to notes app
+
+4. **Production Key**
+   - Name: `CutTheCrap - GovInfo - Production - 2025-01`
+   - Copy key → Save to notes app
+
+**✅ You should now have 4 API keys ready**
+
+**Note:** GovInfo keys are optional but give you access to 39+ government document collections including Congressional Record, court opinions, and hearings.
 
 ---
 
@@ -37,24 +60,28 @@ cd /home/user/CutTheCrap
 # Create .env file
 cp .env.example .env
 
-# Edit .env (paste your DEV key)
+# Edit .env (paste your DEV keys)
 nano .env
 # Or use your preferred editor:
 # vim .env
 # code .env
 ```
 
-**Replace this line:**
+**Replace these lines:**
 ```bash
-CONGRESS_API_KEY=your_DEV_api_key_here
+CONGRESS_API_KEY=your_DEV_congress_api_key_here
+GOVINFO_API_KEY=your_DEV_govinfo_api_key_here
 ```
 
-**With your actual DEV key:**
+**With your actual DEV keys:**
 ```bash
-CONGRESS_API_KEY=<paste_your_dev_key_here>
+CONGRESS_API_KEY=<paste_your_congress_dev_key_here>
+GOVINFO_API_KEY=<paste_your_govinfo_dev_key_here>
 ```
 
 **Save and exit** (Ctrl+X, then Y, then Enter in nano)
+
+**Note:** If you skip GovInfo keys, comment out that line with `#` or leave the placeholder value.
 
 ---
 
@@ -126,17 +153,21 @@ vercel --prod
 
 ---
 
-### Step 6: Set Production API Key (3 minutes)
+### Step 6: Set Production API Keys (5 minutes)
 
 ```bash
-# Add your PRODUCTION API key
+# Add your PRODUCTION Congress.gov API key
 vercel env add CONGRESS_API_KEY production
+# When prompted, paste your PRODUCTION Congress key (NOT the dev key!)
 
-# When prompted, paste your PRODUCTION key
-# (NOT the dev key!)
+# Add your PRODUCTION GovInfo.gov API key (if you got one)
+vercel env add GOVINFO_API_KEY production
+# When prompted, paste your PRODUCTION GovInfo key
 ```
 
-**Then redeploy to pick up the key:**
+**Note:** If you're skipping GovInfo, only add the Congress.gov key.
+
+**Then redeploy to pick up the keys:**
 
 ```bash
 vercel --prod
@@ -170,7 +201,7 @@ vercel logs --follow
 # Full deployment in one go:
 cd /home/user/CutTheCrap
 cp .env.example .env
-nano .env  # Add DEV key
+nano .env  # Add BOTH DEV keys (Congress + GovInfo)
 npm install
 npm run dev  # Test locally (http://localhost:3000)
 # Ctrl+C to stop
@@ -179,7 +210,8 @@ git merge claude/open-tasks-01PGkUpVA6pAEWE7UwFhmvG8
 git push origin main
 vercel login
 vercel --prod
-vercel env add CONGRESS_API_KEY production  # Paste PROD key
+vercel env add CONGRESS_API_KEY production  # Paste Congress PROD key
+vercel env add GOVINFO_API_KEY production   # Paste GovInfo PROD key (optional)
 vercel --prod
 vercel inspect  # Get live URL
 ```
@@ -263,10 +295,20 @@ After deployment, verify:
 - ✅ Secret scrubbing in logs
 - ✅ All P0/P1 vulnerabilities fixed
 
-**API Keys:**
-- Dev key: In local `.env` (gitignored)
-- Prod key: In Vercel environment variables
-- Both from Congress.gov (free, 5000 req/hour each)
+**API Keys (4 total):**
+- **Congress.gov** (Required):
+  - Dev key: In local `.env` (gitignored)
+  - Prod key: In Vercel environment variables
+  - Free, 5,000 req/hour each
+- **GovInfo.gov** (Optional):
+  - Dev key: In local `.env` (gitignored)
+  - Prod key: In Vercel environment variables
+  - Free, 1,000 req/hour each
+
+**What You Get:**
+- Congressional bills (Congress.gov)
+- Federal Register regulations (no key needed!)
+- 39+ document collections (GovInfo.gov - if you add keys)
 
 ---
 
@@ -296,7 +338,7 @@ After deployment, verify:
 
 ---
 
-**Estimated Time:** 30 minutes total
+**Estimated Time:** 40 minutes total (15 min for keys, 25 min for deployment)
 **Difficulty:** Easy (just follow the steps)
 
 **Good luck tomorrow! 🚀**
