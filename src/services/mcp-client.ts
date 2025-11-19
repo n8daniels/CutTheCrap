@@ -15,6 +15,7 @@ import { Bill, BillText, BillStatus, SearchBillsParams, DocumentGraph } from '@/
 import { config } from '@/lib/config';
 import { validateMCPServerPath, buildSecureEnv, validateBillType } from '@/security/mcp-config';
 import { logMCPToolCall } from '@/lib/audit-logger';
+import { trackCongressAPIRequest } from '@/lib/api-quota-monitor';
 
 export class FedDocMCPClient {
   private client: Client | null = null;
@@ -212,6 +213,9 @@ export class FedDocMCPClient {
         });
 
         const durationMs = Date.now() - startTime;
+
+        // SECURITY: Track Congress.gov API quota usage
+        trackCongressAPIRequest();
 
         // SECURITY: Log successful MCP tool call
         await logMCPToolCall({
