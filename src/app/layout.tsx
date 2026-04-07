@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'CutTheCrap - AI-Powered Federal Legislation Analysis',
-  description: 'Understand federal legislation with AI-powered analysis and intelligent insights',
+  title: 'CutTheCrap — Federal Legislation, Connected',
+  description: 'See what a bill actually does, what it changes, and who is connected to it. Free, non-partisan civic tool.',
 };
 
 export default function RootLayout({
@@ -23,7 +23,7 @@ export default function RootLayout({
               </div>
               <div className="flex items-center space-x-4">
                 <a href="/" className="text-gray-700 hover:text-primary-600">Home</a>
-                <a href="/about" className="text-gray-700 hover:text-primary-600">About</a>
+                <a href="/search" className="text-gray-700 hover:text-primary-600">Search</a>
               </div>
             </div>
           </div>

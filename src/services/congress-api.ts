@@ -97,6 +97,80 @@ async function fetchJSON<T>(path: string): Promise<T> {
 }
 
 /**
+ * Search bills by keyword
+ */
+export async function searchBills(query: string, options?: {
+  congress?: number;
+  limit?: number;
+  offset?: number;
+}) {
+  const limit = options?.limit || 20;
+  const offset = options?.offset || 0;
+  let path = `/bill?limit=${limit}&offset=${offset}`;
+
+  if (query) {
+    path += `&query=${encodeURIComponent(query)}`;
+  }
+  // Default to current congress for more relevant results
+  const congress = options?.congress || 119;
+  path = `/bill/${congress}?limit=${limit}&offset=${offset}`;
+  if (query) path += `&query=${encodeURIComponent(query)}`;
+
+  const data = await fetchJSON<{ bills: CongressBillListItem[]; pagination: { count: number } }>(path);
+
+  return {
+    bills: (data.bills || []).map(b => ({
+      id: `${b.congress}/${b.type.toLowerCase()}/${b.number}`,
+      title: b.title,
+      congress: b.congress,
+      type: b.type,
+      number: b.number,
+      introducedDate: b.latestAction?.actionDate || '',
+      latestAction: b.latestAction?.text || '',
+      policyArea: b.policyArea?.name || null,
+      url: b.url,
+    })),
+    totalCount: data.pagination?.count || 0,
+  };
+}
+
+/**
+ * Fetch recently introduced or active bills
+ */
+export async function fetchRecentBills(options?: {
+  congress?: number;
+  limit?: number;
+  sort?: string;
+}) {
+  const congress = options?.congress || 119;
+  const limit = options?.limit || 10;
+  const path = `/bill/${congress}?limit=${limit}&sort=updateDate+desc`;
+
+  const data = await fetchJSON<{ bills: CongressBillListItem[] }>(path);
+
+  return (data.bills || []).map(b => ({
+    id: `${b.congress}/${b.type.toLowerCase()}/${b.number}`,
+    title: b.title,
+    congress: b.congress,
+    type: b.type,
+    number: b.number,
+    introducedDate: b.latestAction?.actionDate || '',
+    latestAction: b.latestAction?.text || '',
+    policyArea: b.policyArea?.name || null,
+  }));
+}
+
+interface CongressBillListItem {
+  congress: number;
+  type: string;
+  number: number;
+  title: string;
+  url: string;
+  latestAction?: { actionDate: string; text: string };
+  policyArea?: { name: string };
+}
+
+/**
  * Parse a bill ID like "117/hr/3684" into components
  */
 function parseBillId(billId: string): { congress: string; type: string; number: string } {
