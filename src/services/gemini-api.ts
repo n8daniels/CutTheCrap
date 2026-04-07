@@ -39,9 +39,9 @@ export async function generateBillSummary(billData: {
   policyArea: string;
   introducedDate: string;
 }): Promise<AISummary | null> {
-  // Only summarize 2026+ bills
+  // Only summarize bills from the 119th Congress onward (2025+)
   const year = parseInt(billData.introducedDate?.substring(0, 4) || '0');
-  if (year < 2026) return null;
+  if (year < 2025) return null;
 
   if (!config.geminiApiKey) {
     console.warn('Gemini API key not configured — skipping AI summary');

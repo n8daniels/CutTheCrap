@@ -6,7 +6,7 @@
 
 import { getAPICache, CACHE_TTL } from './api-cache';
 
-const LEGISLATORS_URL = 'https://raw.githubusercontent.com/unitedstates/congress-legislators/main/legislators-current.json';
+const LEGISLATORS_URL = 'https://unitedstates.github.io/congress-legislators/legislators-current.json';
 
 interface LegislatorEntry {
   id: {
