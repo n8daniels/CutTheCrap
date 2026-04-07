@@ -1,24 +1,11 @@
 /**
- * Bill Analysis API - Fetches bill with full dependency graph
+ * Bill Analysis API - Fetches bill with related data directly from Congress.gov
  * POST /api/bills/analyze
- *
- * SECURITY CONTROLS APPLIED:
- * - Rate limiting: 10 requests/minute standard, 5 force refreshes/hour
- * - Input validation via Zod schema
- * - Bill ID format validation
- *
- * See: docs/security/threat_model.md - Scenario 2
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getMCPClient } from '@/services/mcp-client';
-import { getDocumentCache } from '@/lib/document-cache';
-import { DocumentGraphBuilder } from '@/lib/document-graph';
-import { AIContextBuilder } from '@/lib/ai-context-builder';
-import { rateLimit, RateLimitPresets } from '@/middleware/rate-limit';
-import { config } from '@/lib/config';
-import { logAPIRequest, getClientIP } from '@/lib/audit-logger';
+import { fetchBillComplete } from '@/services/congress-api';
 
 const requestSchema = z.object({
   billId: z.string().regex(/^\d+\/[a-z]+\/\d+$/, 'Invalid bill ID format'),
@@ -27,146 +14,100 @@ const requestSchema = z.object({
   forceRefresh: z.boolean().default(false),
 });
 
-// SECURITY: Rate limiters for this endpoint
-const standardLimiter = rateLimit({
-  interval: 60 * 1000, // 1 minute
-  uniqueTokenPerInterval: 10,
-  message: 'Too many bill analysis requests. Please wait a moment.',
-});
-
-const forceRefreshLimiter = RateLimitPresets.cacheBypass;
-
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
-  const clientIP = getClientIP(request.headers);
-
-  // SECURITY FIX: Apply standard rate limiting
-  // Prevents API quota exhaustion and DoS
-  // See: docs/security/threat_model.md - Scenario 2
-  const rateLimitResponse = await standardLimiter(request);
-  if (rateLimitResponse) {
-    return rateLimitResponse;
-  }
 
   try {
     const body = await request.json();
-    const { billId, includeDependencies, maxDepth, forceRefresh } = requestSchema.parse(body);
+    const { billId } = requestSchema.parse(body);
 
     console.log(`Analyzing bill ${billId}...`);
 
-    // SECURITY FIX: Extra strict rate limiting for force refresh
-    // Prevents cache bypass abuse
-    // See: docs/security/llm-rag-mcp-security.md - Section 3
-    if (forceRefresh) {
-      const forceRefreshResponse = await forceRefreshLimiter(request);
-      if (forceRefreshResponse) {
-        return forceRefreshResponse;
-      }
-    }
+    const data = await fetchBillComplete(billId);
 
-    const cache = getDocumentCache();
-    const cacheKey = `bill:graph:${billId}:${maxDepth}`;
-
-    // Check cache unless force refresh
-    if (!forceRefresh) {
-      const cached = await cache.get(cacheKey);
-      if (cached) {
-        console.log(`Returning cached result for ${billId}`);
-
-        const contextBuilder = new AIContextBuilder();
-        const aiContext = contextBuilder.buildContext(cached);
-
-        return NextResponse.json({
-          bill: cached.root,
-          documentGraph: cached,
-          aiContext,
-          metadata: {
-            cached: true,
-            fetchTimeMs: cached.fetchTimeMs,
-            documentsIncluded: cached.totalNodes,
+    // Build response in the shape the frontend expects
+    const response = {
+      bill: {
+        id: data.bill.id,
+        type: 'bill',
+        title: data.bill.title,
+        content: data.summary || 'No summary available. Check Congress.gov for full text.',
+        metadata: {
+          status: data.bill.status,
+          last_action: data.bill.status,
+          last_action_date: data.bill.statusDate,
+          congress: data.bill.congress,
+          chamber: data.bill.originChamber,
+          introduced: data.bill.introducedDate,
+          policyArea: data.bill.policyArea,
+          becameLaw: data.bill.becameLaw,
+          sponsors: data.bill.sponsors,
+        },
+      },
+      documentGraph: {
+        totalNodes: 1 + data.amendments.length + data.relatedBills.length,
+      },
+      aiContext: {
+        dependencies: [
+          ...data.amendments.map(a => ({
+            id: `amendment-${a.number}`,
+            title: `Amendment ${a.number}`,
+            type: 'amendment',
+            relationship: 'Amends this bill',
+            summary: a.purpose,
+            relevantSections: [],
+          })),
+          ...data.relatedBills.map(rb => ({
+            id: rb.id,
+            title: rb.title,
+            type: 'bill',
+            relationship: rb.relationship,
+            summary: rb.status,
+            relevantSections: [],
+          })),
+        ],
+        timeline: [
+          {
+            date: data.bill.introducedDate,
+            event: 'Introduced',
+            document: data.bill.title,
           },
-        });
-      }
-    }
-
-    // Build fresh graph
-    const mcpClient = getMCPClient();
-    await mcpClient.connect();
-
-    const graphBuilder = new DocumentGraphBuilder(mcpClient, cache);
-    const graph = await graphBuilder.buildGraph(
-      billId,
-      includeDependencies ? maxDepth : 0
-    );
-
-    // Build AI context
-    const contextBuilder = new AIContextBuilder();
-    const aiContext = contextBuilder.buildContext(graph);
-
-    await mcpClient.disconnect();
-
-    // SECURITY: Log successful API request
-    await logAPIRequest({
-      endpoint: '/api/bills/analyze',
-      method: 'POST',
-      parameters: { billId, includeDependencies, maxDepth, forceRefresh },
-      result: 'success',
-      durationMs: Date.now() - startTime,
-      ipAddress: clientIP,
-      statusCode: 200,
-    });
-
-    return NextResponse.json({
-      bill: graph.root,
-      documentGraph: graph,
-      aiContext,
+          ...(data.bill.statusDate ? [{
+            date: data.bill.statusDate,
+            event: data.bill.status,
+            document: data.bill.title,
+          }] : []),
+        ],
+        metadata: {
+          cacheHits: 0,
+          totalDocuments: 1 + data.amendments.length + data.relatedBills.length,
+          sponsors: data.bill.sponsors,
+          cosponsors: data.cosponsors,
+          amendmentCount: data.metadata.amendmentCount,
+          relatedBillCount: data.metadata.relatedBillCount,
+          cosponsorCount: data.metadata.cosponsorCount,
+        },
+      },
       metadata: {
         cached: false,
-        fetchTimeMs: graph.fetchTimeMs,
-        documentsIncluded: graph.totalNodes,
+        fetchTimeMs: Date.now() - startTime,
+        documentsIncluded: 1 + data.amendments.length + data.relatedBills.length,
       },
-    });
+    };
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Error analyzing bill:', error);
 
     if (error instanceof z.ZodError) {
-      // SECURITY: Log validation error
-      await logAPIRequest({
-        endpoint: '/api/bills/analyze',
-        method: 'POST',
-        parameters: {},
-        result: 'failure',
-        durationMs: Date.now() - startTime,
-        ipAddress: clientIP,
-        statusCode: 400,
-        error: 'Validation error',
-      });
-
       return NextResponse.json(
         { error: 'Invalid request', details: error.errors },
         { status: 400 }
       );
     }
 
-    // SECURITY: Log internal error
-    await logAPIRequest({
-      endpoint: '/api/bills/analyze',
-      method: 'POST',
-      parameters: {},
-      result: 'failure',
-      durationMs: Date.now() - startTime,
-      ipAddress: clientIP,
-      statusCode: 500,
-      error: error instanceof Error ? error.message : String(error),
-    });
-
-    // SECURITY: Don't expose internal error details in production
-    const errorMessage = config.isProduction
-      ? 'An error occurred while analyzing the bill'
-      : String(error);
-
     return NextResponse.json(
-      { error: errorMessage },
+      { error: error instanceof Error ? error.message : 'An error occurred while analyzing the bill' },
       { status: 500 }
     );
   }
