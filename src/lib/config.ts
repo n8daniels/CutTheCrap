@@ -10,6 +10,12 @@ export const config = {
   // Congress API
   congressApiKey: process.env.CONGRESS_API_KEY || '',
 
+  // FEC API
+  fecApiKey: process.env.FEC_API_KEY || '',
+
+  // Google Gemini
+  geminiApiKey: process.env.GEMINI_API_KEY || '',
+
   // FedDocMCP
   fedDocMcpPath: process.env.FEDDOC_MCP_PATH || './packages/feddoc-mcp/src/server.py',
   fedDocMcpEnabled: process.env.FEDDOC_MCP_ENABLED === 'true',

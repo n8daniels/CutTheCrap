@@ -1,11 +1,15 @@
 /**
- * Bill Analysis API - Fetches bill with related data directly from Congress.gov
+ * Bill Analysis API - Fetches bill with related data, AI summary, and donor connections
  * POST /api/bills/analyze
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { fetchBillComplete } from '@/services/congress-api';
+import { fetchBillActions } from '@/services/congress-members-api';
+import { generateBillSummary } from '@/services/gemini-api';
+import { resolveMemberIds } from '@/lib/member-ids';
+import { fetchFullDonorProfile } from '@/services/fec-api';
 
 const requestSchema = z.object({
   billId: z.string().regex(/^\d+\/[a-z]+\/\d+$/, 'Invalid bill ID format'),
@@ -23,9 +27,66 @@ export async function POST(request: NextRequest) {
 
     console.log(`Analyzing bill ${billId}...`);
 
-    const data = await fetchBillComplete(billId);
+    const [congress, type, number] = billId.split('/');
 
-    // Build response in the shape the frontend expects
+    // Fetch bill data and full actions timeline in parallel
+    const [data, actions] = await Promise.all([
+      fetchBillComplete(billId),
+      fetchBillActions(parseInt(congress), type, parseInt(number)).catch(() => []),
+    ]);
+
+    // Generate AI summary (only for 2026+ bills, non-blocking)
+    const aiSummaryPromise = generateBillSummary({
+      id: billId,
+      title: data.bill.title,
+      summary: data.summary,
+      sponsors: data.bill.sponsors,
+      policyArea: data.bill.policyArea,
+      introducedDate: data.bill.introducedDate,
+    }).catch(() => null);
+
+    // Resolve sponsor IDs and fetch donor data (non-blocking)
+    const sponsorDonorPromise = (async () => {
+      try {
+        const sponsors = data.bill.sponsors || [];
+        if (sponsors.length === 0) return [];
+
+        const donorResults = await Promise.all(
+          sponsors.slice(0, 3).map(async (sponsor: any) => {
+            const ids = await resolveMemberIds(sponsor.bioguideId);
+            if (!ids?.fecIds?.[0]) return { sponsor, donorProfile: null };
+
+            const donorProfile = await fetchFullDonorProfile(ids.fecIds[0]).catch(() => null);
+            return { sponsor, donorProfile, memberIds: ids };
+          })
+        );
+
+        return donorResults;
+      } catch {
+        return [];
+      }
+    })();
+
+    // Wait for AI summary and donor data
+    const [aiSummary, sponsorDonors] = await Promise.all([
+      aiSummaryPromise,
+      sponsorDonorPromise,
+    ]);
+
+    // Build full timeline from actions
+    const fullTimeline = actions.length > 0
+      ? actions.map((a: any) => ({
+          date: a.date,
+          event: a.text,
+          type: a.type,
+          chamber: a.chamber,
+          rollCallNumber: a.rollCallNumber,
+        }))
+      : [
+          { date: data.bill.introducedDate, event: 'Introduced', type: 'IntroReferral' },
+          ...(data.bill.statusDate ? [{ date: data.bill.statusDate, event: data.bill.status, type: 'Action' }] : []),
+        ];
+
     const response = {
       bill: {
         id: data.bill.id,
@@ -44,6 +105,8 @@ export async function POST(request: NextRequest) {
           sponsors: data.bill.sponsors,
         },
       },
+      aiSummary: aiSummary || null,
+      sponsorDonors: sponsorDonors || [],
       documentGraph: {
         totalNodes: 1 + data.amendments.length + data.relatedBills.length,
       },
@@ -66,18 +129,7 @@ export async function POST(request: NextRequest) {
             relevantSections: [],
           })),
         ],
-        timeline: [
-          {
-            date: data.bill.introducedDate,
-            event: 'Introduced',
-            document: data.bill.title,
-          },
-          ...(data.bill.statusDate ? [{
-            date: data.bill.statusDate,
-            event: data.bill.status,
-            document: data.bill.title,
-          }] : []),
-        ],
+        timeline: fullTimeline,
         metadata: {
           cacheHits: 0,
           totalDocuments: 1 + data.amendments.length + data.relatedBills.length,
