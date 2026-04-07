@@ -1,11 +1,19 @@
 'use client';
 
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { DocumentGraph } from '@/types/document';
 import { AIContext } from '@/types/ai-context';
 
 export default function BillsPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-12 text-center">Loading...</div>}>
+      <BillsContent />
+    </Suspense>
+  );
+}
+
+function BillsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const billId = searchParams.get('id');

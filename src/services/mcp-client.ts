@@ -227,7 +227,7 @@ export class FedDocMCPClient {
         });
 
         // Parse JSON response from TextContent
-        if (result.content && result.content.length > 0) {
+        if (result.content && Array.isArray(result.content) && result.content.length > 0) {
           const textContent = result.content[0];
           if (textContent.type === 'text' && textContent.text) {
             return JSON.parse(textContent.text);
