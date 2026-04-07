@@ -19,7 +19,7 @@ export default function RootLayout({
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <h1 className="text-2xl font-bold text-primary-600">CutTheCrap</h1>
-                <span className="text-sm text-gray-500">No fluff, just results</span>
+                <span className="text-sm text-gray-500">Federal legislation, connected</span>
               </div>
               <div className="flex items-center space-x-4">
                 <a href="/" className="text-gray-700 hover:text-primary-600">Home</a>
@@ -31,9 +31,8 @@ export default function RootLayout({
         <main>{children}</main>
         <footer className="mt-12 py-8 bg-white border-t border-gray-200">
           <div className="container mx-auto px-4 text-center text-gray-600">
-            <p>Built with focus. No fluff, no BS, just results.</p>
-            <p className="mt-2 text-sm">
-              CutTheCrap &copy; {new Date().getFullYear()} - Powered by AI
+            <p className="text-sm">
+              CutTheCrap &copy; {new Date().getFullYear()} &middot; Open source civic tool &middot; <a href="https://github.com/n8daniels/CutTheCrap" className="text-primary-600 hover:underline">GitHub</a>
             </p>
           </div>
         </footer>
