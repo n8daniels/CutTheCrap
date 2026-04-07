@@ -9,36 +9,37 @@ export default function HomePage() {
             CutTheCrap
           </h1>
           <p className="text-xl text-gray-600 mb-8">
-            AI-powered analysis platform that learns from your data to deliver actionable insights without the fluff
+            See what a bill actually does, what it changes, and who is connected to it.
           </p>
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Intelligent Federal Legislation Analysis
+            Federal Legislation, Connected
           </h2>
           <p className="text-gray-700 mb-6">
-            CutTheCrap uses advanced AI to analyze federal bills and their dependencies,
-            providing you with comprehensive context and insights.
+            Enter a bill and CutTheCrap maps the full picture — the laws it amends,
+            the regulations it references, the amendments that change it, and the
+            people behind it. No spin. No bias. Just the connections.
           </p>
 
           <div className="grid md:grid-cols-3 gap-6 mb-8">
             <div className="p-4 bg-primary-50 rounded-lg">
-              <div className="text-primary-600 font-bold mb-2">Smart Dependencies</div>
+              <div className="text-primary-600 font-bold mb-2">Connect the Dots</div>
               <p className="text-sm text-gray-700">
-                Automatically fetches and analyzes all related bills, amendments, and referenced laws
+                See every law, amendment, and regulation a bill touches — mapped automatically
               </p>
             </div>
             <div className="p-4 bg-primary-50 rounded-lg">
-              <div className="text-primary-600 font-bold mb-2">Context-Aware AI</div>
+              <div className="text-primary-600 font-bold mb-2">Plain English</div>
               <p className="text-sm text-gray-700">
-                AI that understands full legislative context for accurate, insightful analysis
+                Understand what a bill actually does without reading 200 pages of legalese
               </p>
             </div>
             <div className="p-4 bg-primary-50 rounded-lg">
-              <div className="text-primary-600 font-bold mb-2">90% Cost Reduction</div>
+              <div className="text-primary-600 font-bold mb-2">Free &amp; Open</div>
               <p className="text-sm text-gray-700">
-                Intelligent caching and deduplication saves time and reduces API costs
+                Built on public data. No paywall. No political agenda. For everyone.
               </p>
             </div>
           </div>
@@ -70,48 +71,48 @@ export default function HomePage() {
         <div className="grid md:grid-cols-2 gap-6">
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-3">
-              Core Focus
+              What It Does
             </h3>
             <ul className="space-y-2 text-gray-700">
               <li className="flex items-start">
-                <span className="text-primary-600 mr-2">✓</span>
-                Building trainable AI models
+                <span className="text-primary-600 mr-2">&#x2713;</span>
+                Maps bill dependencies — amendments, referenced laws, regulations
               </li>
               <li className="flex items-start">
-                <span className="text-primary-600 mr-2">✓</span>
-                Intelligent analysis pipelines
+                <span className="text-primary-600 mr-2">&#x2713;</span>
+                Shows the full legislative chain, not just one document
               </li>
               <li className="flex items-start">
-                <span className="text-primary-600 mr-2">✓</span>
-                Custom AI behaviors
+                <span className="text-primary-600 mr-2">&#x2713;</span>
+                Explains impact in plain language
               </li>
               <li className="flex items-start">
-                <span className="text-primary-600 mr-2">✓</span>
-                Continuous learning and improvement
+                <span className="text-primary-600 mr-2">&#x2713;</span>
+                100% public data — Congress.gov, GovInfo, Federal Register
               </li>
             </ul>
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-3">
-              Tech Stack
+              Coming Soon
             </h3>
             <ul className="space-y-2 text-gray-700">
               <li className="flex items-start">
-                <span className="text-primary-600 mr-2">•</span>
-                Next.js 14 with App Router
+                <span className="text-primary-600 mr-2">&#x2192;</span>
+                Follow the money — sponsor donors and lobbying data
               </li>
               <li className="flex items-start">
-                <span className="text-primary-600 mr-2">•</span>
-                TypeScript for type safety
+                <span className="text-primary-600 mr-2">&#x2192;</span>
+                Interactive visual graph of bill connections
               </li>
               <li className="flex items-start">
-                <span className="text-primary-600 mr-2">•</span>
-                Model Context Protocol (MCP)
+                <span className="text-primary-600 mr-2">&#x2192;</span>
+                Voting records and committee assignments
               </li>
               <li className="flex items-start">
-                <span className="text-primary-600 mr-2">•</span>
-                Tailwind CSS for styling
+                <span className="text-primary-600 mr-2">&#x2192;</span>
+                Where the money goes — spending and contracts
               </li>
             </ul>
           </div>
@@ -119,7 +120,10 @@ export default function HomePage() {
 
         <div className="mt-8 text-center">
           <p className="text-gray-600">
-            Currently in early development. Building the foundation for custom AI training and intelligent data analysis.
+            Public legislation should be publicly understandable.
+          </p>
+          <p className="text-sm text-gray-400 mt-2">
+            Non-partisan civic tool. Open source. Built by a citizen, for citizens.
           </p>
         </div>
       </div>
