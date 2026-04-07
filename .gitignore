@@ -36,3 +36,15 @@ yarn-error.log*
 
 # OS
 Thumbs.db
+
+# Next.js
+.next/
+
+# Claude Code
+.claude/
+
+# Personal notes
+PUSH_WHEN_HOME.txt
+TESTING_TONIGHT.md
+SESSION_SUMMARY.md
+SESSION_NOTES*.md
