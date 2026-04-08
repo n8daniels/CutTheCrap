@@ -5,6 +5,8 @@ import { useEffect, useState, Suspense } from 'react';
 import AISummaryCard from '@/components/bill/AISummaryCard';
 import SponsorFinancials from '@/components/bill/SponsorFinancials';
 import VoteHemicycle from '@/components/bill/VoteHemicycle';
+import Regulations from '@/components/bill/Regulations';
+import Spending from '@/components/bill/Spending';
 
 export default function BillsPage() {
   return (
@@ -292,9 +294,16 @@ function BillsContent() {
           </section>
         )}
 
+        {/* Regulations — Federal Register */}
+        <Regulations billId={bill.id} billTitle={bill.title} />
+
+        {/* Spending — USASpending.gov */}
+        <Spending billId={bill.id} billTitle={bill.title} />
+
         {/* Footer Stats */}
         <div className="text-center text-sm text-gray-400 py-4">
-          Analyzed in {metadata?.fetchTimeMs}ms | {metadata?.documentsIncluded} documents connected
+          Analyzed in {metadata?.fetchTimeMs}ms | {metadata?.documentsIncluded} documents connected |
+          Data from Congress.gov, FEC, Federal Register, USASpending.gov
         </div>
       </div>
     </div>
