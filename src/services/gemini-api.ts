@@ -128,14 +128,16 @@ ${billData.summary ? `CRS SUMMARY: ${billData.summary.substring(0, 2000)}` : ''}
 Respond in JSON with these fields:
 {
   "summary": "A 2-3 sentence plain-English explanation of what this bill does and why it matters. Write for someone with no legal background. Be factual and specific about what would change.",
-  "supportersView": "1-2 sentences on why supporters say this bill is needed. What problem does it solve? Be specific.",
-  "opponentsView": "1-2 sentences on why opponents have concerns. What are the criticisms? Be specific."
+  "supportersView": "1-2 sentences explaining what this bill means from a left-leaning / progressive / Democratic perspective. What do they see as the benefit or concern? Be specific and factual.",
+  "opponentsView": "1-2 sentences explaining what this bill means from a right-leaning / conservative / Republican perspective. What do they see as the benefit or concern? Be specific and factual."
 }
 
 Rules:
 - Be factual and balanced. Do not advocate for either side.
+- Frame supportersView as "What this means for the Left" and opponentsView as "What this means for the Right."
+- Both sides may support OR oppose a bill — don't assume Left=support and Right=oppose.
 - Use plain English — no legal jargon.
 - Be specific about impacts, not vague generalities.
-- If you don't have enough information for supportersView or opponentsView, say "Perspectives on this bill are not yet widely documented."
+- If you don't have enough information, say "Perspectives on this bill are not yet widely documented."
 - Do not make up facts. Only state what can be inferred from the bill title, policy area, and summary.`;
 }

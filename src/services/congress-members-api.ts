@@ -110,15 +110,24 @@ export async function fetchBillActions(congress: number, type: string, number: n
 
   const data = await fetchJSON<any>(`/bill/${congress}/${type}/${number}/actions?limit=250`);
 
-  const result = (data.actions || []).map((a: any) => ({
-    date: a.actionDate,
-    text: a.text,
-    type: a.type || 'Action',
-    chamber: a.actionCode?.startsWith('H') ? 'House' :
-             a.actionCode?.startsWith('S') ? 'Senate' : null,
-    rollCallNumber: a.recordedVotes?.[0]?.rollNumber || null,
-    rollCallUrl: a.recordedVotes?.[0]?.url || null,
-  }));
+  // Deduplicate actions (Congress.gov sometimes returns duplicates)
+  const seen = new Set<string>();
+  const result = (data.actions || [])
+    .map((a: any) => ({
+      date: a.actionDate,
+      text: a.text,
+      type: a.type || 'Action',
+      chamber: a.actionCode?.startsWith('H') ? 'House' :
+               a.actionCode?.startsWith('S') ? 'Senate' : null,
+      rollCallNumber: a.recordedVotes?.[0]?.rollNumber || null,
+      rollCallUrl: a.recordedVotes?.[0]?.url || null,
+    }))
+    .filter((a: any) => {
+      const key = `${a.date}:${a.text}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 
   cache.set(cacheKey, result, CACHE_TTL.BILL);
   return result;
