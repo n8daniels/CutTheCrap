@@ -7,6 +7,7 @@ import SponsorFinancials from '@/components/bill/SponsorFinancials';
 import VoteHemicycle from '@/components/bill/VoteHemicycle';
 import Regulations from '@/components/bill/Regulations';
 import Spending from '@/components/bill/Spending';
+import BillGraph from '@/components/bill/BillGraph';
 
 export default function BillsPage() {
   return (
@@ -184,6 +185,11 @@ function BillsContent() {
           <p className="text-xs text-gray-400 text-center mt-4">
             Vote data shown is representative. Full roll call integration coming soon.
           </p>
+        </section>
+
+        {/* Connection Map */}
+        <section>
+          <BillGraph data={data} />
         </section>
 
         {/* Follow the Money */}

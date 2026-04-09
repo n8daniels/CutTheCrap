@@ -54,8 +54,10 @@ export default function SponsorFinancials({ sponsorDonors, cosponsors }: Sponsor
                   <span className="text-white font-bold text-xl">{sponsor.party}</span>
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-white">{sponsor.fullName}</h3>
-                  <p className="text-white/80 text-sm">Sponsor</p>
+                  <a href={`/members/${sponsor.bioguideId}`} className="text-xl font-bold text-white hover:underline">
+                    {sponsor.fullName}
+                  </a>
+                  <p className="text-white/80 text-sm">Sponsor — click for full profile</p>
                 </div>
               </div>
             </div>
