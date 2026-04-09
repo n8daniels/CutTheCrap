@@ -56,12 +56,13 @@ export default function SearchBar() {
     const lowerQuery = query.toLowerCase();
     const nicknameMatches = Object.entries(BILL_NICKNAMES)
       .filter(([name]) => name.includes(lowerQuery))
-      .map(([, bill]) => ({ id: bill.id, title: bill.title, policyArea: 'Popular Name Match' }));
+      .map(([, bill]) => ({ id: bill.id, title: bill.title, policyArea: 'Popular Name Match', isNickname: true }));
 
     if (nicknameMatches.length > 0) {
       setResults(nicknameMatches);
       setShowDropdown(true);
-      // Don't return — also search Congress.gov below
+      // Don't search Congress.gov if we have a nickname match — avoids overwriting
+      return;
     }
 
     timerRef.current = setTimeout(async () => {
