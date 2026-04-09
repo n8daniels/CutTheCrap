@@ -5,6 +5,18 @@ import { useRouter } from 'next/navigation';
 
 const BILL_ID_PATTERN = /^\d+\/[a-z]+\/\d+$/;
 
+// Map popular nicknames to bill IDs
+const BILL_NICKNAMES: Record<string, { id: string; title: string }> = {
+  'big beautiful bill': { id: '119/hr/1', title: 'One Big Beautiful Bill Act (H.R. 1)' },
+  'beautiful bill': { id: '119/hr/1', title: 'One Big Beautiful Bill Act (H.R. 1)' },
+  'infrastructure bill': { id: '117/hr/3684', title: 'Infrastructure Investment and Jobs Act' },
+  'inflation reduction act': { id: '117/hr/5376', title: 'Inflation Reduction Act of 2022' },
+  'chips act': { id: '117/hr/4346', title: 'CHIPS and Science Act' },
+  'tiktok ban': { id: '118/hr/7521', title: 'Protecting Americans from Foreign Adversary Controlled Applications Act' },
+  'ndaa': { id: '119/s/2296', title: 'National Defense Authorization Act for Fiscal Year 2026' },
+  'farm bill': { id: '118/hr/8467', title: 'Farm, Food, and National Security Act of 2024' },
+};
+
 export default function SearchBar() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
@@ -33,11 +45,23 @@ export default function SearchBar() {
       return;
     }
 
-    // If it looks like a bill ID, don't search — they'll submit directly
+    // If it looks like a bill ID, don't search
     if (BILL_ID_PATTERN.test(query)) {
       setResults([]);
       setShowDropdown(false);
       return;
+    }
+
+    // Check for nickname match
+    const lowerQuery = query.toLowerCase();
+    const nicknameMatches = Object.entries(BILL_NICKNAMES)
+      .filter(([name]) => name.includes(lowerQuery))
+      .map(([, bill]) => ({ id: bill.id, title: bill.title, policyArea: 'Popular Name Match' }));
+
+    if (nicknameMatches.length > 0) {
+      setResults(nicknameMatches);
+      setShowDropdown(true);
+      // Don't return — also search Congress.gov below
     }
 
     timerRef.current = setTimeout(async () => {
@@ -61,11 +85,22 @@ export default function SearchBar() {
     e.preventDefault();
     if (!query.trim()) return;
 
+    // Check bill ID pattern
     if (BILL_ID_PATTERN.test(query.trim())) {
       router.push(`/bills?id=${query.trim()}`);
-    } else {
-      router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+      setShowDropdown(false);
+      return;
     }
+
+    // Check nicknames
+    const nickname = BILL_NICKNAMES[query.trim().toLowerCase()];
+    if (nickname) {
+      router.push(`/bills?id=${nickname.id}`);
+      setShowDropdown(false);
+      return;
+    }
+
+    router.push(`/search?q=${encodeURIComponent(query.trim())}`);
     setShowDropdown(false);
   }
 

@@ -84,12 +84,20 @@ export default function SponsorFinancials({ sponsorDonors, cosponsors }: Sponsor
                 {donors.length > 0 && (
                   <div className="mb-6">
                     <h4 className="font-bold text-gray-900 mb-3">Top Donors (by employer)</h4>
+                    <p className="text-xs text-gray-500 mb-3">
+                      FEC reports donations by the contributor&apos;s self-reported employer. &quot;Retired,&quot; &quot;Self Employed,&quot; and &quot;Homemaker&quot; are occupations, not organizations.
+                    </p>
                     <div className="space-y-2">
-                      {donors.slice(0, 7).map((d, j) => (
+                      {donors.slice(0, 7).map((d, j) => {
+                        const isOccupation = ['RETIRED', 'SELF EMPLOYED', 'SELF-EMPLOYED', 'HOMEMAKER', 'NOT EMPLOYED', 'STUDENT', 'NONE'].includes(d.employer?.toUpperCase());
+                        return (
                         <div key={j} className="flex items-center gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium text-gray-900 truncate">{d.employer}</span>
+                              <span className="text-sm font-medium text-gray-900 truncate">
+                                {d.employer}
+                                {isOccupation && <span className="text-xs text-gray-400 ml-1">(individual donors)</span>}
+                              </span>
                               <span className="text-sm font-bold text-gray-900 ml-2">{formatMoney(d.total)}</span>
                             </div>
                             <div className="mt-1 h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -100,7 +108,8 @@ export default function SponsorFinancials({ sponsorDonors, cosponsors }: Sponsor
                             </div>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}

@@ -25,7 +25,7 @@ export default function VoteHemicycle({ title, members, totalSeats }: VoteHemicy
       const container = svgRef.current?.parentElement;
       if (container) {
         const w = Math.min(container.clientWidth, 800);
-        setDimensions({ width: w, height: w * 0.55 });
+        setDimensions({ width: w, height: w * 0.65 });
       }
     }
     handleResize();
@@ -45,19 +45,20 @@ export default function VoteHemicycle({ title, members, totalSeats }: VoteHemicy
     return order(a.party) - order(b.party);
   });
 
-  // Calculate positions in a hemicycle
-  const rows = Math.ceil(Math.sqrt(sorted.length / 3));
+  // Calculate positions in a hemicycle — more rows, more spacing
+  const rows = Math.ceil(Math.sqrt(sorted.length / 2.2));
   const dots: Array<{ x: number; y: number; member: Member; radius: number }> = [];
+  const dotRadius = Math.max(2.5, Math.min(4.5, (width / totalSeats) * 2));
+  const spacing = dotRadius * 3.2; // Space between dot centers
 
   let memberIdx = 0;
   for (let row = 0; row < rows && memberIdx < sorted.length; row++) {
     const rowRadius = minRadius + (maxRadius - minRadius) * (row / (rows - 1 || 1));
     const circumference = Math.PI * rowRadius;
     const dotsInRow = Math.min(
-      Math.floor(circumference / 8),
+      Math.floor(circumference / spacing),
       sorted.length - memberIdx
     );
-    const dotRadius = Math.max(2, Math.min(5, (width / totalSeats) * 1.5));
 
     for (let i = 0; i < dotsInRow && memberIdx < sorted.length; i++) {
       const angle = Math.PI - (Math.PI * (i + 0.5)) / dotsInRow;
