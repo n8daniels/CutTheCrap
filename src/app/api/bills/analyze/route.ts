@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { fetchBillComplete } from '@/services/congress-api';
 import { fetchBillActions } from '@/services/congress-members-api';
 import { generateBillSummary } from '@/services/gemini-api';
+import { generateBillSummaryHF } from '@/services/huggingface-api';
 import { resolveMemberIds } from '@/lib/member-ids';
 import { fetchFullDonorProfile } from '@/services/fec-api';
 
@@ -35,15 +36,25 @@ export async function POST(request: NextRequest) {
       fetchBillActions(parseInt(congress), type, parseInt(number)).catch(() => []),
     ]);
 
-    // Generate AI summary (only for 2026+ bills, non-blocking)
-    const aiSummaryPromise = generateBillSummary({
+    // Generate AI summary — try Gemini first, fall back to HuggingFace
+    const summaryInput = {
       id: billId,
       title: data.bill.title,
       summary: data.summary,
       sponsors: data.bill.sponsors,
       policyArea: data.bill.policyArea,
       introducedDate: data.bill.introducedDate,
-    }).catch(() => null);
+    };
+
+    const aiSummaryPromise = (async () => {
+      // Try Gemini first
+      const geminiResult = await generateBillSummary(summaryInput).catch(() => null);
+      if (geminiResult) return geminiResult;
+
+      // Fall back to HuggingFace
+      console.log('Gemini unavailable, falling back to HuggingFace...');
+      return generateBillSummaryHF(summaryInput).catch(() => null);
+    })();
 
     // Resolve sponsor IDs and fetch donor data (non-blocking)
     const sponsorDonorPromise = (async () => {

@@ -16,6 +16,9 @@ export const config = {
   // Google Gemini
   geminiApiKey: process.env.GEMINI_API_KEY || '',
 
+  // Hugging Face (free fallback for AI summaries)
+  huggingfaceToken: process.env.HUGGINGFACE_TOKEN || '',
+
   // FedDocMCP
   fedDocMcpPath: process.env.FEDDOC_MCP_PATH || './packages/feddoc-mcp/src/server.py',
   fedDocMcpEnabled: process.env.FEDDOC_MCP_ENABLED === 'true',
