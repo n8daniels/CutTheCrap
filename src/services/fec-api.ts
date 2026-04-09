@@ -154,13 +154,53 @@ export async function fetchIndependentExpenditures(candidateId: string) {
 }
 
 /**
+ * Get itemized individual contributions (Schedule A) — actual donor names
+ * Only donations over $200 are itemized by FEC
+ */
+export async function fetchIndividualDonors(candidateId: string, limit: number = 20) {
+  const cache = getAPICache();
+  const cacheKey = `fec:individual-donors:${candidateId}:${limit}`;
+
+  const cached = cache.get<any>(cacheKey);
+  if (cached) return cached;
+
+  // Get the principal campaign committee
+  const committees = await fetchFEC<any>(`/candidate/${candidateId}/committees/?designation=P&per_page=1`);
+  const committeeId = committees.results?.[0]?.committee_id;
+
+  if (!committeeId) return { donors: [], total: 0 };
+
+  const data = await fetchFEC<any>(
+    `/schedules/schedule_a/?committee_id=${committeeId}&per_page=${limit}&sort=-contribution_receipt_amount&is_individual=true`
+  );
+
+  const result = {
+    committeeId,
+    donors: (data.results || []).map((d: any) => ({
+      name: d.contributor_name || 'Unknown',
+      employer: d.contributor_employer || '',
+      occupation: d.contributor_occupation || '',
+      city: d.contributor_city || '',
+      state: d.contributor_state || '',
+      amount: d.contribution_receipt_amount || 0,
+      date: d.contribution_receipt_date || '',
+    })),
+    total: data.pagination?.count || 0,
+  };
+
+  cache.set(cacheKey, result, CACHE_TTL.DONORS);
+  return result;
+}
+
+/**
  * Full donor profile for a candidate — combines financials + top donors + independent expenditures
  */
 export async function fetchFullDonorProfile(candidateId: string) {
-  const [financials, donors, ie] = await Promise.all([
+  const [financials, donors, ie, individuals] = await Promise.all([
     fetchCandidateFinancials(candidateId).catch(() => null),
     fetchTopDonors(candidateId).catch(() => ({ employers: [], total: 0 })),
     fetchIndependentExpenditures(candidateId).catch(() => ({ expenditures: [], total: 0 })),
+    fetchIndividualDonors(candidateId, 20).catch(() => ({ donors: [], total: 0 })),
   ]);
 
   return {
@@ -168,5 +208,6 @@ export async function fetchFullDonorProfile(candidateId: string) {
     financials,
     topDonors: donors,
     independentExpenditures: ie,
+    individualDonors: individuals,
   };
 }

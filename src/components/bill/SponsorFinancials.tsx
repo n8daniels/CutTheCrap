@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 interface SponsorFinancialsProps {
   sponsorDonors: Array<{
     sponsor: { fullName: string; party: string; state: string; bioguideId: string };
@@ -134,6 +136,11 @@ export default function SponsorFinancials({ sponsorDonors, cosponsors }: Sponsor
                   </div>
                 )}
 
+                {/* Individual Donors — actual names */}
+                {(donorProfile as any)?.individualDonors?.donors?.length > 0 && (
+                  <IndividualDonorsSection donors={(donorProfile as any).individualDonors.donors} total={(donorProfile as any).individualDonors.total} />
+                )}
+
                 <p className="text-xs text-gray-400 mt-4 pt-3 border-t border-gray-100">
                   Source: Federal Election Commission (FEC) | Cycle: {fin.cycle}
                 </p>
@@ -166,6 +173,56 @@ export default function SponsorFinancials({ sponsorDonors, cosponsors }: Sponsor
                 {c.fullName}
               </span>
             ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function IndividualDonorsSection({ donors, total }: { donors: any[]; total: number }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="mt-4 pt-4 border-t border-gray-200">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center justify-between w-full text-left"
+      >
+        <h4 className="font-bold text-gray-900">
+          Individual Donors <span className="text-gray-400 font-normal text-sm">({total.toLocaleString()} total, showing top 20)</span>
+        </h4>
+        <span className="text-gray-400 text-sm">{expanded ? 'Hide' : 'Show'} &#9662;</span>
+      </button>
+
+      {expanded && (
+        <div className="mt-3">
+          <p className="text-xs text-gray-500 mb-3">
+            FEC requires itemized reporting for individual contributions over $200.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 text-left">
+                  <th className="py-2 pr-3 font-medium text-gray-500">Name</th>
+                  <th className="py-2 pr-3 font-medium text-gray-500 hidden sm:table-cell">Employer</th>
+                  <th className="py-2 pr-3 font-medium text-gray-500 hidden md:table-cell">Location</th>
+                  <th className="py-2 font-medium text-gray-500 text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {donors.map((d: any, i: number) => (
+                  <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="py-2 pr-3 font-medium text-gray-900">{d.name}</td>
+                    <td className="py-2 pr-3 text-gray-600 hidden sm:table-cell">{d.employer || d.occupation || '—'}</td>
+                    <td className="py-2 pr-3 text-gray-500 text-xs hidden md:table-cell">
+                      {d.city && d.state ? `${d.city}, ${d.state}` : d.state || ''}
+                    </td>
+                    <td className="py-2 text-right font-bold text-gray-900">${d.amount?.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
