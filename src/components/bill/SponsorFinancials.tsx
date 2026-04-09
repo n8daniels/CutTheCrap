@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import InfoTooltip from '@/components/InfoTooltip';
 
 interface SponsorFinancialsProps {
   sponsorDonors: Array<{
@@ -68,19 +69,19 @@ export default function SponsorFinancials({ sponsorDonors, cosponsors }: Sponsor
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <div className="bg-gray-50 rounded-lg p-3 text-center">
                     <div className="text-2xl font-bold text-green-700">{formatMoney(fin.totalReceipts)}</div>
-                    <div className="text-xs text-gray-500 mt-1">Total Raised</div>
+                    <div className="text-xs text-gray-500 mt-1">Total Raised <InfoTooltip text="Total money received by the candidate's campaign committee from all sources — individuals, PACs, party committees, and self-funding." /></div>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-3 text-center">
                     <div className="text-2xl font-bold text-gray-900">{formatMoney(fin.individualContributions)}</div>
-                    <div className="text-xs text-gray-500 mt-1">Individual</div>
+                    <div className="text-xs text-gray-500 mt-1">Individual <InfoTooltip text="Donations from individual people (not organizations). FEC requires donors giving over $200 to be listed by name — see the Individual Donors section below for those names." /></div>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-3 text-center">
                     <div className="text-2xl font-bold text-gray-900">{formatMoney(fin.pacContributions)}</div>
-                    <div className="text-xs text-gray-500 mt-1">PAC Money</div>
+                    <div className="text-xs text-gray-500 mt-1">PAC Money <InfoTooltip text="Political Action Committee contributions. PACs pool donations from employees, members, or shareholders of corporations, unions, or trade groups and donate to candidates. They are limited to $5,000 per candidate per election." /></div>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-3 text-center">
                     <div className="text-2xl font-bold text-gray-900">{formatMoney(fin.cashOnHand)}</div>
-                    <div className="text-xs text-gray-500 mt-1">Cash on Hand</div>
+                    <div className="text-xs text-gray-500 mt-1">Cash on Hand <InfoTooltip text="Money the campaign has in the bank at the end of the most recent reporting period. A large war chest can deter challengers and fund future campaigns." /></div>
                   </div>
                 </div>
 
@@ -184,6 +185,14 @@ export default function SponsorFinancials({ sponsorDonors, cosponsors }: Sponsor
 
 function IndividualDonorsSection({ donors, total }: { donors: any[]; total: number }) {
   const [expanded, setExpanded] = useState(false);
+  const [page, setPage] = useState(1);
+  const perPage = 20;
+  const totalPages = Math.ceil(total / perPage);
+
+  // For now we only have the initial 20 donors from the API
+  // Pagination UI is ready for when we add server-side paging
+  const startIdx = 0;
+  const displayDonors = donors;
 
   return (
     <div className="mt-4 pt-4 border-t border-gray-200">
@@ -192,40 +201,59 @@ function IndividualDonorsSection({ donors, total }: { donors: any[]; total: numb
         className="flex items-center justify-between w-full text-left"
       >
         <h4 className="font-bold text-gray-900">
-          Individual Donors <span className="text-gray-400 font-normal text-sm">({total.toLocaleString()} total, showing top 20)</span>
+          Individual Donors
+          <InfoTooltip text="FEC requires anyone donating over $200 to a federal candidate to be listed by name, employer, and occupation. This is public record." />
+          <span className="text-gray-400 font-normal text-sm ml-2">({total.toLocaleString()} total)</span>
         </h4>
         <span className="text-gray-400 text-sm">{expanded ? 'Hide' : 'Show'} &#9662;</span>
       </button>
 
       {expanded && (
         <div className="mt-3">
-          <p className="text-xs text-gray-500 mb-3">
-            FEC requires itemized reporting for individual contributions over $200.
-          </p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 text-left">
                   <th className="py-2 pr-3 font-medium text-gray-500">Name</th>
                   <th className="py-2 pr-3 font-medium text-gray-500 hidden sm:table-cell">Employer</th>
-                  <th className="py-2 pr-3 font-medium text-gray-500 hidden md:table-cell">Location</th>
+                  <th className="py-2 pr-3 font-medium text-gray-500 hidden md:table-cell">Occupation</th>
+                  <th className="py-2 pr-3 font-medium text-gray-500 hidden lg:table-cell">Location</th>
+                  <th className="py-2 pr-3 font-medium text-gray-500 hidden lg:table-cell">Date</th>
                   <th className="py-2 font-medium text-gray-500 text-right">Amount</th>
                 </tr>
               </thead>
               <tbody>
-                {donors.map((d: any, i: number) => (
+                {displayDonors.map((d: any, i: number) => (
                   <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-2 pr-3 font-medium text-gray-900">{d.name}</td>
-                    <td className="py-2 pr-3 text-gray-600 hidden sm:table-cell">{d.employer || d.occupation || '—'}</td>
-                    <td className="py-2 pr-3 text-gray-500 text-xs hidden md:table-cell">
+                    <td className="py-2 pr-3 text-gray-600 hidden sm:table-cell">{d.employer || '—'}</td>
+                    <td className="py-2 pr-3 text-gray-500 hidden md:table-cell">{d.occupation || '—'}</td>
+                    <td className="py-2 pr-3 text-gray-500 text-xs hidden lg:table-cell">
                       {d.city && d.state ? `${d.city}, ${d.state}` : d.state || ''}
                     </td>
+                    <td className="py-2 pr-3 text-gray-500 text-xs hidden lg:table-cell">{d.date || ''}</td>
                     <td className="py-2 text-right font-bold text-gray-900">${d.amount?.toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {total > perPage && (
+            <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-100">
+              <p className="text-xs text-gray-500">
+                Showing {displayDonors.length} of {total.toLocaleString()} donors (sorted by amount)
+              </p>
+              <p className="text-xs text-gray-400">
+                Full pagination coming soon — currently showing top {perPage}
+              </p>
+            </div>
+          )}
+
+          <p className="text-xs text-gray-400 mt-2">
+            Donations over $200 are public record per FEC regulations.
+          </p>
         </div>
       )}
     </div>

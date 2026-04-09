@@ -114,7 +114,9 @@ function BillsContent() {
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
             <div className="flex-1">
               <h1 className="text-3xl lg:text-4xl font-bold leading-tight">{bill.title}</h1>
-              <p className="text-white/80 mt-2 text-lg">{bill.id.toUpperCase()}</p>
+              <p className="text-white/80 mt-2 text-lg" title={`${bill.id.split('/')[0]}th Congress / ${bill.id.split('/')[1].toUpperCase() === 'HR' ? 'House Bill' : bill.id.split('/')[1].toUpperCase() === 'S' ? 'Senate Bill' : bill.id.split('/')[1].toUpperCase()} / Number ${bill.id.split('/')[2]}`}>
+                {formatBillId(bill.id)}
+              </p>
             </div>
             {becameLaw && (
               <div className="bg-white/20 backdrop-blur-sm rounded-lg px-5 py-3 flex-shrink-0">
@@ -320,6 +322,18 @@ function BillsContent() {
  * Generate mock vote data for hemicycle demo
  * Will be replaced with real Congress.gov roll call data
  */
+function formatBillId(id: string): string {
+  const parts = id.split('/');
+  if (parts.length !== 3) return id.toUpperCase();
+  const congress = parts[0];
+  const typeMap: Record<string, string> = {
+    hr: 'H.R.', s: 'S.', hjres: 'H.J.Res.', sjres: 'S.J.Res.',
+    hconres: 'H.Con.Res.', sconres: 'S.Con.Res.', hres: 'H.Res.', sres: 'S.Res.',
+  };
+  const type = typeMap[parts[1]] || parts[1].toUpperCase();
+  return `${congress}th Congress — ${type} ${parts[2]}`;
+}
+
 function generateMockVotes() {
   const house: Array<{ name: string; party: string; state: string; vote: 'Yea' | 'Nay' | 'Not Voting' }> = [];
   const senate: Array<{ name: string; party: string; state: string; vote: 'Yea' | 'Nay' | 'Not Voting' }> = [];

@@ -34,6 +34,9 @@ export default function HomePage() {
           </p>
           <div className="max-w-2xl mx-auto">
             <SearchBar />
+            <p className="text-xs text-gray-400 mt-2">
+              Search by keyword or bill ID. Bill IDs use the format: <span className="font-mono bg-gray-100 px-1 rounded">congress/type/number</span> — for example, <span className="font-mono bg-gray-100 px-1 rounded">119/hr/1</span> means the 119th Congress, House Resolution, bill #1. You can also try popular names like &ldquo;Big Beautiful Bill&rdquo; or &ldquo;CHIPS Act.&rdquo;
+            </p>
           </div>
         </div>
 

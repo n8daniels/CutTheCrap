@@ -1,5 +1,17 @@
 import Link from 'next/link';
 
+const TYPE_MAP: Record<string, string> = {
+  hr: 'H.R.', s: 'S.', hjres: 'H.J.Res.', sjres: 'S.J.Res.',
+  hconres: 'H.Con.Res.', sconres: 'S.Con.Res.', hres: 'H.Res.', sres: 'S.Res.',
+};
+
+function formatBillIdShort(id: string): string {
+  const parts = id.split('/');
+  if (parts.length !== 3) return id.toUpperCase();
+  const type = TYPE_MAP[parts[1]] || parts[1].toUpperCase();
+  return `${type} ${parts[2]} (${parts[0]}th Congress)`;
+}
+
 interface BillCardProps {
   id: string;
   title: string;
@@ -18,7 +30,7 @@ export default function BillCard({ id, title, type, policyArea, introducedDate, 
             <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">
               {title}
             </h3>
-            <p className="text-xs text-gray-500 mt-1">{id.toUpperCase()}</p>
+            <p className="text-xs text-gray-500 mt-1">{formatBillIdShort(id)}</p>
           </div>
           {policyArea && (
             <span className="px-2 py-1 bg-primary-50 text-primary-700 rounded text-xs whitespace-nowrap flex-shrink-0">
