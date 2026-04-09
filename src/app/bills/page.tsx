@@ -8,6 +8,8 @@ import VoteHemicycle from '@/components/bill/VoteHemicycle';
 import Regulations from '@/components/bill/Regulations';
 import Spending from '@/components/bill/Spending';
 import BillGraph from '@/components/bill/BillGraph';
+import VisualizationCarousel from '@/components/bill/VisualizationCarousel';
+import GeographicMap from '@/components/bill/GeographicMap';
 
 export default function BillsPage() {
   return (
@@ -169,30 +171,29 @@ function BillsContent() {
           </section>
         )}
 
-        {/* Vote Visualization — Full Width */}
-        <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:p-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">How Congress Voted</h2>
-          <div className="grid lg:grid-cols-2 gap-8">
-            <VoteHemicycle
-              title="House"
-              members={mockVotes.house}
-              totalSeats={435}
-            />
-            <VoteHemicycle
-              title="Senate"
-              members={mockVotes.senate}
-              totalSeats={100}
-            />
-          </div>
-          <p className="text-xs text-gray-400 text-center mt-4">
-            Vote data shown is representative. Full roll call integration coming soon.
-          </p>
-        </section>
-
-        {/* Connection Map */}
-        <section>
-          <BillGraph data={data} />
-        </section>
+        {/* Visualization Carousel — Votes, Connections, Geographic */}
+        <VisualizationCarousel slides={[
+          {
+            title: 'How Congress Voted',
+            subtitle: 'Vote data shown is representative — full roll call integration coming soon',
+            component: (
+              <div className="grid lg:grid-cols-2 gap-8">
+                <VoteHemicycle title="House" members={mockVotes.house} totalSeats={435} />
+                <VoteHemicycle title="Senate" members={mockVotes.senate} totalSeats={100} />
+              </div>
+            ),
+          },
+          {
+            title: 'Connection Map',
+            subtitle: 'Click a node to drill down — double-click to open in new tab',
+            component: <BillGraph data={data} />,
+          },
+          {
+            title: 'Geographic Connections',
+            subtitle: 'See where this bill connects across the country and the world',
+            component: <GeographicMap />,
+          },
+        ]} />
 
         {/* Follow the Money */}
         {sponsorDonors && sponsorDonors.length > 0 && (

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { buildBillGraph, GraphData, GraphNode } from '@/lib/graph-builder';
+import { buildBillGraph, GraphData, GraphNode, GraphLink } from '@/lib/graph-builder';
 
 interface BillGraphProps {
   data: any;
@@ -11,27 +11,71 @@ export default function BillGraph({ data }: BillGraphProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [graphData, setGraphData] = useState<GraphData | null>(null);
+  const [focusNode, setFocusNode] = useState<string | null>(null);
+  const [history, setHistory] = useState<string[]>([]);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; node: GraphNode } | null>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 500 });
 
-  // Node positions for force simulation
   const positionsRef = useRef<Map<string, { x: number; y: number; vx: number; vy: number }>>(new Map());
+  const lastClickRef = useRef<{ id: string; time: number } | null>(null);
 
+  // Build graph data
   useEffect(() => {
     const graph = buildBillGraph(data);
     setGraphData(graph);
+  }, [data]);
 
-    // Initialize positions
+  // Get visible nodes/links based on focus
+  const getVisibleGraph = useCallback((): GraphData => {
+    if (!graphData) return { nodes: [], links: [] };
+    if (!focusNode) return graphData;
+
+    // Show focused node + its direct connections
+    const connectedIds = new Set<string>();
+    connectedIds.add(focusNode);
+
+    graphData.links.forEach(link => {
+      if (link.source === focusNode) connectedIds.add(link.target);
+      if (link.target === focusNode) connectedIds.add(link.source);
+    });
+
+    return {
+      nodes: graphData.nodes.filter(n => connectedIds.has(n.id)),
+      links: graphData.links.filter(l => connectedIds.has(l.source) && connectedIds.has(l.target)),
+    };
+  }, [graphData, focusNode]);
+
+  // Resize handler
+  useEffect(() => {
+    function handleResize() {
+      if (containerRef.current) {
+        const w = containerRef.current.clientWidth;
+        setDimensions({ width: w, height: Math.max(400, Math.min(550, w * 0.55)) });
+      }
+    }
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Initialize positions when graph or focus changes
+  useEffect(() => {
+    const visible = getVisibleGraph();
+    if (visible.nodes.length === 0) return;
+
     const positions = new Map<string, { x: number; y: number; vx: number; vy: number }>();
     const cx = dimensions.width / 2;
     const cy = dimensions.height / 2;
 
-    graph.nodes.forEach((node, i) => {
-      if (node.type === 'bill') {
+    // Center node is either the focused node or the bill
+    const centerId = focusNode || visible.nodes.find(n => n.type === 'bill')?.id;
+
+    visible.nodes.forEach((node, i) => {
+      if (node.id === centerId) {
         positions.set(node.id, { x: cx, y: cy, vx: 0, vy: 0 });
       } else {
-        const angle = (2 * Math.PI * i) / graph.nodes.length;
-        const radius = 150 + Math.random() * 100;
+        const angle = (2 * Math.PI * i) / visible.nodes.length;
+        const radius = 130 + Math.random() * 80;
         positions.set(node.id, {
           x: cx + Math.cos(angle) * radius,
           y: cy + Math.sin(angle) * radius,
@@ -41,23 +85,12 @@ export default function BillGraph({ data }: BillGraphProps) {
       }
     });
     positionsRef.current = positions;
-  }, [data, dimensions]);
+  }, [getVisibleGraph, focusNode, dimensions]);
 
+  // Force simulation + rendering
   useEffect(() => {
-    function handleResize() {
-      if (containerRef.current) {
-        const w = containerRef.current.clientWidth;
-        setDimensions({ width: w, height: Math.max(400, Math.min(600, w * 0.6)) });
-      }
-    }
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Simple force simulation
-  useEffect(() => {
-    if (!graphData || !canvasRef.current) return;
+    const visible = getVisibleGraph();
+    if (visible.nodes.length === 0 || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -65,119 +98,126 @@ export default function BillGraph({ data }: BillGraphProps) {
 
     let animationId: number;
     let frame = 0;
-    const maxFrames = 200;
+    const maxFrames = 180;
+    const centerId = focusNode || visible.nodes.find(n => n.type === 'bill')?.id;
 
     function simulate() {
-      if (!graphData || !ctx) return;
+      if (!ctx) return;
       const positions = positionsRef.current;
       const { width, height } = dimensions;
       const cx = width / 2;
       const cy = height / 2;
 
-      // Apply forces
-      graphData.nodes.forEach(node => {
+      // Forces
+      visible.nodes.forEach(node => {
         const pos = positions.get(node.id);
         if (!pos) return;
 
         // Center gravity
-        const dx = cx - pos.x;
-        const dy = cy - pos.y;
-        pos.vx += dx * 0.001;
-        pos.vy += dy * 0.001;
+        pos.vx += (cx - pos.x) * 0.001;
+        pos.vy += (cy - pos.y) * 0.001;
 
-        // Repulsion from other nodes
-        graphData.nodes.forEach(other => {
+        // Repulsion
+        visible.nodes.forEach(other => {
           if (other.id === node.id) return;
-          const otherPos = positions.get(other.id);
-          if (!otherPos) return;
-          const ddx = pos.x - otherPos.x;
-          const ddy = pos.y - otherPos.y;
-          const dist = Math.sqrt(ddx * ddx + ddy * ddy) || 1;
-          const force = Math.min(500 / (dist * dist), 2);
-          pos.vx += (ddx / dist) * force;
-          pos.vy += (ddy / dist) * force;
+          const op = positions.get(other.id);
+          if (!op) return;
+          const dx = pos.x - op.x;
+          const dy = pos.y - op.y;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+          const force = Math.min(800 / (dist * dist), 3);
+          pos.vx += (dx / dist) * force;
+          pos.vy += (dy / dist) * force;
         });
       });
 
-      // Apply link forces (attraction)
-      graphData.links.forEach(link => {
-        const sourcePos = positions.get(link.source);
-        const targetPos = positions.get(link.target);
-        if (!sourcePos || !targetPos) return;
-        const dx = targetPos.x - sourcePos.x;
-        const dy = targetPos.y - sourcePos.y;
+      // Link attraction
+      visible.links.forEach(link => {
+        const sp = positions.get(link.source);
+        const tp = positions.get(link.target);
+        if (!sp || !tp) return;
+        const dx = tp.x - sp.x;
+        const dy = tp.y - sp.y;
         const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        const force = (dist - 120) * 0.005;
-        sourcePos.vx += (dx / dist) * force;
-        sourcePos.vy += (dy / dist) * force;
-        targetPos.vx -= (dx / dist) * force;
-        targetPos.vy -= (dy / dist) * force;
+        const force = (dist - 140) * 0.004;
+        sp.vx += (dx / dist) * force;
+        sp.vy += (dy / dist) * force;
+        tp.vx -= (dx / dist) * force;
+        tp.vy -= (dy / dist) * force;
       });
 
-      // Update positions with damping
-      const damping = 0.85;
-      graphData.nodes.forEach(node => {
+      // Update positions
+      visible.nodes.forEach(node => {
         const pos = positions.get(node.id);
         if (!pos) return;
-        // Pin the bill node to center
-        if (node.type === 'bill') {
-          pos.x = cx;
-          pos.y = cy;
-          pos.vx = 0;
-          pos.vy = 0;
+        if (node.id === centerId) {
+          pos.x = cx; pos.y = cy; pos.vx = 0; pos.vy = 0;
           return;
         }
-        pos.vx *= damping;
-        pos.vy *= damping;
+        pos.vx *= 0.82;
+        pos.vy *= 0.82;
         pos.x += pos.vx;
         pos.y += pos.vy;
-        // Keep in bounds
-        pos.x = Math.max(40, Math.min(width - 40, pos.x));
-        pos.y = Math.max(40, Math.min(height - 40, pos.y));
+        pos.x = Math.max(50, Math.min(width - 50, pos.x));
+        pos.y = Math.max(50, Math.min(height - 50, pos.y));
       });
 
       // Draw
       ctx.clearRect(0, 0, width, height);
 
-      // Draw links
-      graphData.links.forEach(link => {
-        const sourcePos = positions.get(link.source);
-        const targetPos = positions.get(link.target);
-        if (!sourcePos || !targetPos) return;
+      // Links
+      visible.links.forEach(link => {
+        const sp = positions.get(link.source);
+        const tp = positions.get(link.target);
+        if (!sp || !tp) return;
 
         ctx.beginPath();
-        ctx.moveTo(sourcePos.x, sourcePos.y);
-        ctx.lineTo(targetPos.x, targetPos.y);
+        ctx.moveTo(sp.x, sp.y);
+        ctx.lineTo(tp.x, tp.y);
         ctx.strokeStyle = link.color || '#d1d5db';
-        ctx.lineWidth = link.color === '#eab308' ? 2 : 1;
-        ctx.globalAlpha = 0.5;
+        ctx.lineWidth = link.color === '#eab308' ? 2.5 : 1.5;
+        ctx.globalAlpha = 0.6;
         ctx.stroke();
         ctx.globalAlpha = 1;
+
+        // Link label at midpoint
+        if (link.label) {
+          const mx = (sp.x + tp.x) / 2;
+          const my = (sp.y + tp.y) / 2;
+          ctx.font = '8px sans-serif';
+          ctx.fillStyle = '#9ca3af';
+          ctx.textAlign = 'center';
+          ctx.fillText(link.label, mx, my - 4);
+        }
       });
 
-      // Draw nodes
-      graphData.nodes.forEach(node => {
+      // Nodes
+      visible.nodes.forEach(node => {
         const pos = positions.get(node.id);
         if (!pos) return;
+
+        // Glow for center node
+        if (node.id === centerId) {
+          ctx.beginPath();
+          ctx.arc(pos.x, pos.y, node.size + 6, 0, 2 * Math.PI);
+          ctx.fillStyle = node.color + '22';
+          ctx.fill();
+        }
 
         ctx.beginPath();
         ctx.arc(pos.x, pos.y, node.size, 0, 2 * Math.PI);
         ctx.fillStyle = node.color;
         ctx.fill();
-
-        if (node.type === 'bill') {
-          ctx.strokeStyle = '#fff';
-          ctx.lineWidth = 3;
-          ctx.stroke();
-        }
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = node.id === centerId ? 3 : 1.5;
+        ctx.stroke();
 
         // Label
-        ctx.font = node.type === 'bill' ? 'bold 11px sans-serif' : '9px sans-serif';
+        ctx.font = node.id === centerId ? 'bold 11px sans-serif' : '9px sans-serif';
         ctx.fillStyle = '#374151';
         ctx.textAlign = 'center';
-        const labelY = pos.y + node.size + 12;
-        const label = node.label.length > 25 ? node.label.substring(0, 25) + '...' : node.label;
-        ctx.fillText(label, pos.x, labelY);
+        const label = node.label.length > 28 ? node.label.substring(0, 28) + '...' : node.label;
+        ctx.fillText(label, pos.x, pos.y + node.size + 14);
       });
 
       frame++;
@@ -187,13 +227,65 @@ export default function BillGraph({ data }: BillGraphProps) {
     }
 
     simulate();
+    return () => { if (animationId) cancelAnimationFrame(animationId); };
+  }, [getVisibleGraph, focusNode, dimensions]);
 
-    return () => {
-      if (animationId) cancelAnimationFrame(animationId);
-    };
-  }, [graphData, dimensions]);
+  // Click / double-click handler
+  const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!graphData || !canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
 
-  // Mouse interaction
+    const positions = positionsRef.current;
+    const visible = getVisibleGraph();
+    let clicked: GraphNode | null = null;
+
+    for (const node of visible.nodes) {
+      const pos = positions.get(node.id);
+      if (!pos) continue;
+      const dist = Math.sqrt((mx - pos.x) ** 2 + (my - pos.y) ** 2);
+      if (dist < node.size + 8) {
+        clicked = node;
+        break;
+      }
+    }
+
+    if (!clicked) return;
+
+    const now = Date.now();
+    const last = lastClickRef.current;
+
+    // Double-click detection (within 400ms on same node)
+    if (last && last.id === clicked.id && now - last.time < 400) {
+      // Double click → open in new tab
+      lastClickRef.current = null;
+      let url = '';
+      if (clicked.type === 'bill' || clicked.type === 'related-bill') {
+        const billId = clicked.id.replace('bill:', '').replace('related:', '');
+        url = `/bills?id=${billId}`;
+      } else if (clicked.type === 'sponsor' || clicked.type === 'cosponsor') {
+        const memberId = clicked.id.replace('sponsor:', '').replace('cosponsor:', '');
+        url = `/members/${memberId}`;
+      }
+      if (url) window.open(url, '_blank');
+      return;
+    }
+
+    // Single click → drill down (focus on this node)
+    lastClickRef.current = { id: clicked.id, time: now };
+
+    setTimeout(() => {
+      // Only fire single click if no double click happened
+      if (lastClickRef.current?.id === clicked!.id && Date.now() - lastClickRef.current!.time >= 380) {
+        if (focusNode === clicked!.id) return; // Already focused
+        setHistory(prev => focusNode ? [...prev, focusNode] : prev);
+        setFocusNode(clicked!.id);
+      }
+    }, 410);
+  }, [graphData, getVisibleGraph, focusNode]);
+
+  // Mouse move for tooltip
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!graphData || !canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
@@ -201,13 +293,13 @@ export default function BillGraph({ data }: BillGraphProps) {
     const my = e.clientY - rect.top;
 
     const positions = positionsRef.current;
+    const visible = getVisibleGraph();
     let found: GraphNode | null = null;
 
-    for (const node of graphData.nodes) {
+    for (const node of visible.nodes) {
       const pos = positions.get(node.id);
       if (!pos) continue;
-      const dist = Math.sqrt((mx - pos.x) ** 2 + (my - pos.y) ** 2);
-      if (dist < node.size + 5) {
+      if (Math.sqrt((mx - pos.x) ** 2 + (my - pos.y) ** 2) < node.size + 5) {
         found = node;
         break;
       }
@@ -215,24 +307,60 @@ export default function BillGraph({ data }: BillGraphProps) {
 
     if (found) {
       setTooltip({ x: mx, y: my, node: found });
-      if (canvasRef.current) canvasRef.current.style.cursor = 'pointer';
+      canvasRef.current.style.cursor = 'pointer';
     } else {
       setTooltip(null);
-      if (canvasRef.current) canvasRef.current.style.cursor = 'default';
+      canvasRef.current.style.cursor = 'default';
     }
-  }, [graphData]);
+  }, [graphData, getVisibleGraph]);
+
+  // Back handler
+  const handleBack = () => {
+    if (history.length > 0) {
+      const prev = history[history.length - 1];
+      setHistory(h => h.slice(0, -1));
+      setFocusNode(prev);
+    } else {
+      setFocusNode(null);
+    }
+  };
 
   if (!graphData || graphData.nodes.length === 0) return null;
 
+  const visible = getVisibleGraph();
+
   return (
-    <div className="w-full bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:p-8">
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">Connection Map</h2>
-      <p className="text-sm text-gray-500 mb-4">
-        {graphData.nodes.length} entities connected — bill, sponsors, donors, amendments, related bills
-      </p>
+    <div className="w-full">
+      {/* Controls */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          {(focusNode || history.length > 0) && (
+            <button
+              onClick={handleBack}
+              className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Back
+            </button>
+          )}
+          {focusNode && (
+            <button
+              onClick={() => { setFocusNode(null); setHistory([]); }}
+              className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700 transition-colors"
+            >
+              Show All
+            </button>
+          )}
+        </div>
+        <span className="text-xs text-gray-400">
+          {visible.nodes.length} nodes — click to drill down, double-click to open
+        </span>
+      </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-4 mb-4 text-xs">
+      <div className="flex flex-wrap gap-3 mb-3 text-xs">
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-blue-500 inline-block" /> Bill</span>
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-blue-600 inline-block" /> Democrat</span>
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-red-600 inline-block" /> Republican</span>
@@ -242,11 +370,13 @@ export default function BillGraph({ data }: BillGraphProps) {
         <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-purple-500 inline-block" /> Related Bill</span>
       </div>
 
+      {/* Canvas */}
       <div ref={containerRef} className="relative w-full">
         <canvas
           ref={canvasRef}
           width={dimensions.width}
           height={dimensions.height}
+          onClick={handleClick}
           onMouseMove={handleMouseMove}
           onMouseLeave={() => setTooltip(null)}
           className="w-full border border-gray-100 rounded-lg bg-gray-50"
@@ -255,7 +385,7 @@ export default function BillGraph({ data }: BillGraphProps) {
         {tooltip && (
           <div
             className="absolute pointer-events-none bg-gray-900 text-white px-3 py-2 rounded-lg text-sm shadow-lg z-50 max-w-xs"
-            style={{ left: tooltip.x + 15, top: tooltip.y - 10 }}
+            style={{ left: Math.min(tooltip.x + 15, dimensions.width - 200), top: tooltip.y - 10 }}
           >
             <div className="font-bold">{tooltip.node.label}</div>
             <div className="text-gray-300 text-xs capitalize">{tooltip.node.type.replace('-', ' ')}</div>
@@ -267,6 +397,7 @@ export default function BillGraph({ data }: BillGraphProps) {
             {tooltip.node.amount && (
               <div className="text-yellow-400 text-xs">${tooltip.node.amount.toLocaleString()}</div>
             )}
+            <div className="text-gray-500 text-[10px] mt-1">Click to focus — Double-click to open</div>
           </div>
         )}
       </div>
