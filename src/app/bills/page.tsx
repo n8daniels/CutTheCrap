@@ -10,6 +10,7 @@ import Spending from '@/components/bill/Spending';
 import BillGraph from '@/components/bill/BillGraph';
 import VisualizationCarousel from '@/components/bill/VisualizationCarousel';
 import GeographicMap from '@/components/bill/GeographicMap';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 export default function BillsPage() {
   return (
@@ -172,6 +173,7 @@ function BillsContent() {
         )}
 
         {/* Visualization Carousel — Votes, Connections, Geographic */}
+        <ErrorBoundary sectionName="Visualizations">
         <VisualizationCarousel slides={[
           {
             title: 'How Congress Voted',
@@ -194,6 +196,7 @@ function BillsContent() {
             component: <GeographicMap />,
           },
         ]} />
+        </ErrorBoundary>
 
         {/* Follow the Money */}
         {sponsorDonors && sponsorDonors.length > 0 && (
@@ -304,10 +307,14 @@ function BillsContent() {
         )}
 
         {/* Regulations — Federal Register */}
-        <Regulations billId={bill.id} billTitle={bill.title} />
+        <ErrorBoundary sectionName="Federal Register data">
+          <Regulations billId={bill.id} billTitle={bill.title} />
+        </ErrorBoundary>
 
         {/* Spending — USASpending.gov */}
-        <Spending billId={bill.id} billTitle={bill.title} />
+        <ErrorBoundary sectionName="spending data">
+          <Spending billId={bill.id} billTitle={bill.title} />
+        </ErrorBoundary>
 
         {/* Footer Stats */}
         <div className="text-center text-sm text-gray-400 py-4">
