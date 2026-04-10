@@ -53,3 +53,6 @@ SESSION_NOTES*.md
 
 screenshots/
 test-demo.mjs
+
+# Private docs (not for public repo)
+_private/
