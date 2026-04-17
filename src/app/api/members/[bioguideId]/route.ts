@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchMember, fetchMemberBills } from '@/services/congress-members-api';
 import { resolveMemberIds } from '@/lib/member-ids';
-import { fetchFullDonorProfile } from '@/services/fec-api';
+import { fetchFullDonorProfile, searchCandidate } from '@/services/fec-api';
 
 export async function GET(
   request: NextRequest,
@@ -32,7 +32,24 @@ export async function GET(
     }
 
     // Fetch donor data and sponsored bills in parallel
-    const fecId = memberIds?.fecIds?.[0] || null;
+    let fecId = memberIds?.fecIds?.[0] || null;
+
+    // Fallback: search FEC by name if no ID in crosswalk
+    if (!fecId && member.directInformation?.currentMember) {
+      try {
+        const name = member.directInformation?.depiction?.attribution || memberIds?.name;
+        if (name) {
+          const state = memberIds?.currentState || undefined;
+          const candidates = await searchCandidate(name, { state });
+          if (candidates?.length > 0) {
+            fecId = candidates[0].candidateId;
+            console.log(`[FEC] Member name search fallback found ${fecId} for ${name}`);
+          }
+        }
+      } catch {
+        console.log(`[FEC] Member name search fallback failed for ${bioguideId}`);
+      }
+    }
 
     const [donorProfile, sponsoredBills] = await Promise.all([
       fecId ? fetchFullDonorProfile(fecId).catch(() => null) : Promise.resolve(null),

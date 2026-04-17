@@ -10,7 +10,7 @@ import { fetchBillActions } from '@/services/congress-members-api';
 import { generateBillSummary } from '@/services/gemini-api';
 import { generateBillSummaryHF } from '@/services/huggingface-api';
 import { resolveMemberIds } from '@/lib/member-ids';
-import { fetchFullDonorProfile } from '@/services/fec-api';
+import { fetchFullDonorProfile, searchCandidate } from '@/services/fec-api';
 
 const requestSchema = z.object({
   billId: z.string().regex(/^\d+\/[a-z]+\/\d+$/, 'Invalid bill ID format'),
@@ -65,9 +65,28 @@ export async function POST(request: NextRequest) {
         const donorResults = await Promise.all(
           sponsors.slice(0, 3).map(async (sponsor: any) => {
             const ids = await resolveMemberIds(sponsor.bioguideId);
-            if (!ids?.fecIds?.[0]) return { sponsor, donorProfile: null };
 
-            const donorProfile = await fetchFullDonorProfile(ids.fecIds[0]).catch(() => null);
+            // Try crosswalk FEC ID first
+            let fecId = ids?.fecIds?.[0] || null;
+
+            // Fallback: search FEC by name if no ID in crosswalk
+            if (!fecId && (sponsor.fullName || sponsor.firstName)) {
+              try {
+                const name = sponsor.fullName || `${sponsor.firstName} ${sponsor.lastName}`;
+                const state = ids?.currentState || sponsor.state;
+                const candidates = await searchCandidate(name, { state });
+                if (candidates?.length > 0) {
+                  fecId = candidates[0].candidateId;
+                  console.log(`[FEC] Name search fallback found ${fecId} for ${name}`);
+                }
+              } catch {
+                console.log(`[FEC] Name search fallback failed for ${sponsor.fullName || sponsor.bioguideId}`);
+              }
+            }
+
+            if (!fecId) return { sponsor, donorProfile: null, memberIds: ids };
+
+            const donorProfile = await fetchFullDonorProfile(fecId).catch(() => null);
             return { sponsor, donorProfile, memberIds: ids };
           })
         );

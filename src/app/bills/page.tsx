@@ -199,15 +199,24 @@ function BillsContent() {
         </ErrorBoundary>
 
         {/* Follow the Money */}
-        {sponsorDonors && sponsorDonors.length > 0 && (
-          <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Follow the Money</h2>
+        <section>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Follow the Money</h2>
+          {sponsorDonors && sponsorDonors.some((sd: any) => sd.donorProfile) ? (
             <SponsorFinancials
               sponsorDonors={sponsorDonors}
               cosponsors={cosponsors}
             />
-          </section>
-        )}
+          ) : (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+              <p className="text-gray-500 mb-1">
+                Donor data unavailable for this bill&rsquo;s sponsor.
+              </p>
+              <p className="text-sm text-gray-400">
+                FEC campaign finance data could not be loaded. This can happen when a sponsor has no active campaign committee or when the FEC API is temporarily unavailable.
+              </p>
+            </div>
+          )}
+        </section>
 
         {/* CRS Summary */}
         {cleanSummary && cleanSummary !== 'No summary available. Check Congress.gov for full text.' && (

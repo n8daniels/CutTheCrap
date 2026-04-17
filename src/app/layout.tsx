@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import AnalyticsTracker from '@/components/AnalyticsTracker';
 
 export const metadata: Metadata = {
   title: 'CutTheCrap — Federal Legislation, Connected',
@@ -28,6 +29,7 @@ export default function RootLayout({
             </div>
           </div>
         </nav>
+        <AnalyticsTracker />
         <main>{children}</main>
         <footer className="mt-12 py-8 bg-white border-t border-gray-200">
           <div className="container mx-auto px-4 text-center text-gray-600">
