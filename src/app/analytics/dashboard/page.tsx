@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+
+const WorldHeatMap = dynamic(() => import('@/components/WorldHeatMap'), { ssr: false });
 
 interface DashboardData {
   totalVisits: number;
@@ -100,6 +103,11 @@ export default function AnalyticsDashboard() {
           <p className="text-sm text-gray-500">Unique Pages</p>
           <p className="text-3xl font-bold text-primary-700">{data.uniquePages}</p>
         </div>
+      </div>
+
+      {/* World Heat Map */}
+      <div className="mb-8">
+        <WorldHeatMap countryData={data.byCountry} />
       </div>
 
       {/* Breakdown sections */}
