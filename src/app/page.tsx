@@ -4,6 +4,7 @@ import { useRef } from 'react';
 import SearchBar from '@/components/SearchBar';
 import RecentBills from '@/components/RecentBills';
 import LandingHero from '@/components/LandingHero';
+import WhatsHot from '@/components/WhatsHot';
 
 const POLICY_AREAS = [
   'Armed Forces and National Security',
@@ -53,6 +54,11 @@ export default function HomePage() {
                 Search by keyword or bill ID. Bill IDs use the format: <span className="font-mono bg-gray-100 px-1 rounded">congress/type/number</span> — for example, <span className="font-mono bg-gray-100 px-1 rounded">119/hr/1</span> means the 119th Congress, House Resolution, bill #1. You can also try popular names like &ldquo;Big Beautiful Bill&rdquo; or &ldquo;CHIPS Act.&rdquo;
               </p>
             </div>
+          </div>
+
+          {/* In the News */}
+          <div className="mb-10">
+            <WhatsHot />
           </div>
 
           {/* Recent Bills */}

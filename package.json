@@ -25,7 +25,8 @@
   "homepage": "https://github.com/n8daniels/CutTheCrap#readme",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "next lint",
     "export-training-data": "tsx scripts/export-training-data.ts"

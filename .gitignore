@@ -58,3 +58,7 @@ test-demo.mjs
 _private/
 
 /src/generated/prisma
+
+supabase/
+Grants/
+tsconfig.tsbuildinfo

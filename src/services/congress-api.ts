@@ -106,14 +106,14 @@ export async function searchBills(query: string, options?: {
 }) {
   const limit = options?.limit || 20;
   const offset = options?.offset || 0;
-  let path = `/bill?limit=${limit}&offset=${offset}`;
 
-  if (query) {
-    path += `&query=${encodeURIComponent(query)}`;
+  // If a specific congress is requested, scope to it. Otherwise search all.
+  let path: string;
+  if (options?.congress) {
+    path = `/bill/${options.congress}?limit=${limit}&offset=${offset}`;
+  } else {
+    path = `/bill?limit=${limit}&offset=${offset}`;
   }
-  // Default to current congress for more relevant results
-  const congress = options?.congress || 119;
-  path = `/bill/${congress}?limit=${limit}&offset=${offset}`;
   if (query) path += `&query=${encodeURIComponent(query)}`;
 
   const data = await fetchJSON<{ bills: CongressBillListItem[]; pagination: { count: number } }>(path);
