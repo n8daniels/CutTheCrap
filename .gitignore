@@ -56,3 +56,5 @@ test-demo.mjs
 
 # Private docs (not for public repo)
 _private/
+
+/src/generated/prisma

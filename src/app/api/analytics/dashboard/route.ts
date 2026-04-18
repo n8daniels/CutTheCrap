@@ -1,63 +1,60 @@
 import { NextResponse } from 'next/server';
-import { getVisits } from '../store';
+import { getPrisma } from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const visits = getVisits();
+  try {
+    const visits = await getPrisma().visit.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 10000,
+    });
 
-  const totalVisits = visits.length;
+    const totalVisits = visits.length;
 
-  // Visits by page
-  const byPage: Record<string, number> = {};
-  for (const v of visits) {
-    byPage[v.path] = (byPage[v.path] || 0) + 1;
+    const byPage: Record<string, number> = {};
+    const byDay: Record<string, number> = {};
+    const byReferrer: Record<string, number> = {};
+    const byCountry: Record<string, number> = {};
+    const byRegion: Record<string, number> = {};
+    const byCity: Record<string, number> = {};
+
+    for (const v of visits) {
+      byPage[v.path] = (byPage[v.path] || 0) + 1;
+
+      const day = v.createdAt.toISOString().split('T')[0];
+      byDay[day] = (byDay[day] || 0) + 1;
+
+      const ref = v.referrer || '(direct)';
+      byReferrer[ref] = (byReferrer[ref] || 0) + 1;
+
+      const country = v.country || '(unknown)';
+      byCountry[country] = (byCountry[country] || 0) + 1;
+
+      const region = v.region ? `${v.country}/${v.region}` : '(unknown)';
+      byRegion[region] = (byRegion[region] || 0) + 1;
+
+      const city = v.city || '(unknown)';
+      byCity[city] = (byCity[city] || 0) + 1;
+    }
+
+    const uniquePages = Object.keys(byPage).length;
+
+    return NextResponse.json({
+      totalVisits,
+      uniquePages,
+      byPage,
+      byDay,
+      byReferrer,
+      byCountry,
+      byRegion,
+      byCity,
+    });
+  } catch (error) {
+    console.error('Analytics dashboard error:', error);
+    return NextResponse.json(
+      { error: 'Failed to load analytics' },
+      { status: 500 }
+    );
   }
-
-  // Visits by day
-  const byDay: Record<string, number> = {};
-  for (const v of visits) {
-    const day = v.timestamp.slice(0, 10); // YYYY-MM-DD
-    byDay[day] = (byDay[day] || 0) + 1;
-  }
-
-  // Visits by referrer
-  const byReferrer: Record<string, number> = {};
-  for (const v of visits) {
-    const ref = v.referrer || '(direct)';
-    byReferrer[ref] = (byReferrer[ref] || 0) + 1;
-  }
-
-  // Visits by country
-  const byCountry: Record<string, number> = {};
-  for (const v of visits) {
-    const c = v.country || '(unknown)';
-    byCountry[c] = (byCountry[c] || 0) + 1;
-  }
-
-  // Visits by region
-  const byRegion: Record<string, number> = {};
-  for (const v of visits) {
-    const r = v.region ? `${v.country}/${v.region}` : '(unknown)';
-    byRegion[r] = (byRegion[r] || 0) + 1;
-  }
-
-  // Visits by city
-  const byCity: Record<string, number> = {};
-  for (const v of visits) {
-    const c = v.city || '(unknown)';
-    byCity[c] = (byCity[c] || 0) + 1;
-  }
-
-  // Unique pages
-  const uniquePages = Object.keys(byPage).length;
-
-  return NextResponse.json({
-    totalVisits,
-    uniquePages,
-    byPage,
-    byDay,
-    byReferrer,
-    byCountry,
-    byRegion,
-    byCity,
-  });
 }

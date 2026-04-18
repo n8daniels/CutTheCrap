@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Analytics: page visits
+model Visit {
+  id        Int      @id @default(autoincrement())
+  path      String
+  referrer  String   @default("")
+  ip        String   @default("")
+  country   String   @default("")
+  region    String   @default("")
+  city      String   @default("")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([country])
+  @@map("visits")
+}
+
+// Cached bill analysis results
+model CachedBill {
+  id        Int      @id @default(autoincrement())
+  billId    String   @unique @map("bill_id")
+  data      Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  expiresAt DateTime @map("expires_at")
+
+  @@index([billId])
+  @@index([expiresAt])
+  @@map("cached_bills")
+}
+
+// Cached donor profiles
+model CachedDonor {
+  id          Int      @id @default(autoincrement())
+  candidateId String   @unique @map("candidate_id")
+  data        Json
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+  expiresAt   DateTime @map("expires_at")
+
+  @@index([candidateId])
+  @@index([expiresAt])
+  @@map("cached_donors")
+}
