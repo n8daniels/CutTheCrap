@@ -12,13 +12,40 @@ interface AISummaryProps {
 export default function AISummaryCard({ summary, supportersView, opponentsView, model, generatedAt, disclaimer }: AISummaryProps) {
   return (
     <div className="w-full">
-      {/* Main Summary */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:p-8 mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">What This Bill Does</h2>
-        <p className="text-lg text-gray-800 leading-relaxed">{summary}</p>
+      <WhatThisBillDoes summary={summary} />
+      <div className="mt-6">
+        <LeftRightImpact
+          supportersView={supportersView}
+          opponentsView={opponentsView}
+          model={model}
+          generatedAt={generatedAt}
+          disclaimer={disclaimer}
+        />
       </div>
+    </div>
+  );
+}
 
-      {/* Left vs Right Cards */}
+export function WhatThisBillDoes({ summary }: { summary: string }) {
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:p-8">
+      <h2 className="text-2xl font-bold text-gray-900 mb-4">What This Bill Does</h2>
+      <p className="text-lg text-gray-800 leading-relaxed">{summary}</p>
+    </div>
+  );
+}
+
+interface LeftRightProps {
+  supportersView: string;
+  opponentsView: string;
+  model: string;
+  generatedAt: string;
+  disclaimer: string;
+}
+
+export function LeftRightImpact({ supportersView, opponentsView, model, generatedAt, disclaimer }: LeftRightProps) {
+  return (
+    <div>
       <div className="grid md:grid-cols-2 gap-6 mb-4">
         {/* Left / Democrats */}
         <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 p-6 lg:p-8">

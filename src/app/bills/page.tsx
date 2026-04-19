@@ -2,14 +2,11 @@
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
-import AISummaryCard from '@/components/bill/AISummaryCard';
+import { WhatThisBillDoes, LeftRightImpact } from '@/components/bill/AISummaryCard';
 import SponsorFinancials from '@/components/bill/SponsorFinancials';
 import VoteHemicycle from '@/components/bill/VoteHemicycle';
 import Regulations from '@/components/bill/Regulations';
 import Spending from '@/components/bill/Spending';
-import BillGraph from '@/components/bill/BillGraph';
-import VisualizationCarousel from '@/components/bill/VisualizationCarousel';
-import GeographicMap from '@/components/bill/GeographicMap';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 export default function BillsPage() {
@@ -158,11 +155,29 @@ function BillsContent() {
       {/* Content — Wide container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-        {/* AI Summary */}
+        {/* === READING SECTION === */}
+
+        {/* 1. What this bill does */}
         {aiSummary && (
           <section>
-            <AISummaryCard
-              summary={aiSummary.summary}
+            <WhatThisBillDoes summary={aiSummary.summary} />
+          </section>
+        )}
+
+        {/* 2. CRS Summary */}
+        {cleanSummary && cleanSummary !== 'No summary available. Check Congress.gov for full text.' && (
+          <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:p-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Congressional Research Service Summary</h2>
+            <p className="text-gray-700 leading-relaxed">
+              {cleanSummary.length > 2000 ? cleanSummary.substring(0, 2000) + '...' : cleanSummary}
+            </p>
+          </section>
+        )}
+
+        {/* 3. Left vs Right impact */}
+        {aiSummary && (
+          <section>
+            <LeftRightImpact
               supportersView={aiSummary.supportersView}
               opponentsView={aiSummary.opponentsView}
               model={aiSummary.model}
@@ -172,33 +187,28 @@ function BillsContent() {
           </section>
         )}
 
-        {/* Visualization Carousel — Votes, Connections, Geographic */}
-        <ErrorBoundary sectionName="Visualizations">
-        <VisualizationCarousel slides={[
-          {
-            title: 'How Congress Voted',
-            subtitle: 'Vote data shown is representative — full roll call integration coming soon',
-            component: (
-              <div className="grid lg:grid-cols-2 gap-8">
-                <VoteHemicycle title="House" members={mockVotes.house} totalSeats={435} />
-                <VoteHemicycle title="Senate" members={mockVotes.senate} totalSeats={100} />
-              </div>
-            ),
-          },
-          {
-            title: 'Connection Map',
-            subtitle: 'Click a node to drill down — double-click to open in new tab',
-            component: <BillGraph data={data} />,
-          },
-          {
-            title: 'Geographic Connections',
-            subtitle: 'See where this bill connects across the country and the world',
-            component: <GeographicMap />,
-          },
-        ]} />
+        {/* === VOTING === */}
+
+        {/* 4. How Congress Voted */}
+        <ErrorBoundary sectionName="Vote visualization">
+          <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:p-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">How Congress Voted</h2>
+            <p className="text-sm text-gray-500 mb-6">Vote data shown is representative &mdash; full roll call integration coming soon</p>
+            <div className="grid lg:grid-cols-2 gap-8">
+              <VoteHemicycle title="House" members={mockVotes.house} totalSeats={435} />
+              <VoteHemicycle title="Senate" members={mockVotes.senate} totalSeats={100} />
+            </div>
+          </section>
         </ErrorBoundary>
 
-        {/* Follow the Money */}
+        {/* === MONEY SECTION === */}
+
+        {/* 5. Where the money goes (federal spending tied to bill) */}
+        <ErrorBoundary sectionName="spending data">
+          <Spending billId={bill.id} billTitle={bill.title} />
+        </ErrorBoundary>
+
+        {/* 6. Follow the money (donor data) */}
         <section>
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Follow the Money</h2>
           {sponsorDonors && sponsorDonors.some((sd: any) => sd.donorProfile) ? (
@@ -218,19 +228,10 @@ function BillsContent() {
           )}
         </section>
 
-        {/* CRS Summary */}
-        {cleanSummary && cleanSummary !== 'No summary available. Check Congress.gov for full text.' && (
-          <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Congressional Research Service Summary</h2>
-            <p className="text-gray-700 leading-relaxed">
-              {cleanSummary.length > 2000 ? cleanSummary.substring(0, 2000) + '...' : cleanSummary}
-            </p>
-          </section>
-        )}
+        {/* === CONTEXT SECTION === */}
 
-        {/* Two-Column: Amendments + Related Bills */}
+        {/* 7. Amendments + Related Bills (two-column) */}
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Amendments */}
           {amendments.length > 0 && (
             <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
@@ -255,7 +256,6 @@ function BillsContent() {
             </section>
           )}
 
-          {/* Related Bills */}
           {relatedBills.length > 0 && (
             <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h2 className="text-xl font-bold text-gray-900 mb-4">
@@ -276,7 +276,7 @@ function BillsContent() {
           )}
         </div>
 
-        {/* Timeline */}
+        {/* 8. Timeline */}
         {timeline.length > 0 && (
           <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
@@ -315,14 +315,9 @@ function BillsContent() {
           </section>
         )}
 
-        {/* Regulations — Federal Register */}
+        {/* 9. Federal Register / Regulations */}
         <ErrorBoundary sectionName="Federal Register data">
           <Regulations billId={bill.id} billTitle={bill.title} />
-        </ErrorBoundary>
-
-        {/* Spending — USASpending.gov */}
-        <ErrorBoundary sectionName="spending data">
-          <Spending billId={bill.id} billTitle={bill.title} />
         </ErrorBoundary>
 
         {/* Footer Stats */}

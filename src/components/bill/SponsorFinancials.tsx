@@ -94,13 +94,16 @@ export default function SponsorFinancials({ sponsorDonors, cosponsors }: Sponsor
                     </p>
                     <div className="space-y-2">
                       {donors.slice(0, 7).map((d, j) => {
+                        const employerName = d.employer && d.employer !== 'NULL' && d.employer.trim() !== ''
+                          ? d.employer
+                          : 'Name not disclosed';
                         const isOccupation = ['RETIRED', 'SELF EMPLOYED', 'SELF-EMPLOYED', 'HOMEMAKER', 'NOT EMPLOYED', 'STUDENT', 'NONE'].includes(d.employer?.toUpperCase());
                         return (
                         <div key={j} className="flex items-center gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                               <span className="text-sm font-medium text-gray-900 truncate">
-                                {d.employer}
+                                {employerName}
                                 {isOccupation && <span className="text-xs text-gray-400 ml-1">(individual donors)</span>}
                               </span>
                               <span className="text-sm font-bold text-gray-900 ml-2">{formatMoney(d.total)}</span>
@@ -223,18 +226,23 @@ function IndividualDonorsSection({ donors, total }: { donors: any[]; total: numb
                 </tr>
               </thead>
               <tbody>
-                {displayDonors.map((d: any, i: number) => (
+                {displayDonors.map((d: any, i: number) => {
+                  const cleanName = d.name && d.name !== 'NULL' ? d.name : 'Name not disclosed';
+                  const cleanEmployer = d.employer && d.employer !== 'NULL' && d.employer.trim() !== '' ? d.employer : '—';
+                  const cleanOccupation = d.occupation && d.occupation !== 'NULL' && d.occupation.trim() !== '' ? d.occupation : '—';
+                  return (
                   <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-2 pr-3 font-medium text-gray-900">{d.name}</td>
-                    <td className="py-2 pr-3 text-gray-600 hidden sm:table-cell">{d.employer || '—'}</td>
-                    <td className="py-2 pr-3 text-gray-500 hidden md:table-cell">{d.occupation || '—'}</td>
+                    <td className="py-2 pr-3 font-medium text-gray-900">{cleanName}</td>
+                    <td className="py-2 pr-3 text-gray-600 hidden sm:table-cell">{cleanEmployer}</td>
+                    <td className="py-2 pr-3 text-gray-500 hidden md:table-cell">{cleanOccupation}</td>
                     <td className="py-2 pr-3 text-gray-500 text-xs hidden lg:table-cell">
                       {d.city && d.state ? `${d.city}, ${d.state}` : d.state || ''}
                     </td>
                     <td className="py-2 pr-3 text-gray-500 text-xs hidden lg:table-cell">{d.date || ''}</td>
                     <td className="py-2 text-right font-bold text-gray-900">${d.amount?.toLocaleString()}</td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
