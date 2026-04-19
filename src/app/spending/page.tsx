@@ -310,6 +310,16 @@ export default function SpendingPage() {
           </section>
         </div>
       )}
+
+      {/* Source Attribution */}
+      <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-4 text-center">
+        <p className="text-sm text-gray-500">
+          All spending data sourced from <a href="https://usaspending.gov" target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline">USASpending.gov</a>, the official source for federal spending data maintained by the U.S. Department of the Treasury.
+        </p>
+        <p className="text-xs text-gray-400 mt-1">
+          Data reflects FY{overview?.fiscalYear || '2026'} obligations as reported by federal agencies. Updated daily.
+        </p>
+      </div>
     </div>
   );
 }
