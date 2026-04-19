@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import AnalyticsTracker from '@/components/AnalyticsTracker';
+import { ShowWhyButton } from '@/components/LandingModal';
 
 export const metadata: Metadata = {
   title: 'CutTheCrap — Federal Legislation, Connected',
@@ -35,7 +36,7 @@ export default function RootLayout({
         <footer className="mt-12 py-8 bg-white border-t border-gray-200">
           <div className="container mx-auto px-4 text-center text-gray-600">
             <p className="text-sm">
-              CutTheCrap &copy; {new Date().getFullYear()} &middot; Open source civic tool &middot; <a href="https://github.com/n8daniels/CutTheCrap" className="text-primary-600 hover:underline">GitHub</a>
+              CutTheCrap &copy; {new Date().getFullYear()} &middot; Open source civic tool &middot; <a href="https://github.com/n8daniels/CutTheCrap" className="text-primary-600 hover:underline">GitHub</a> &middot; <ShowWhyButton />
             </p>
           </div>
         </footer>

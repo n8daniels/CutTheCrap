@@ -1,9 +1,8 @@
 'use client';
 
-import { useRef } from 'react';
 import SearchBar from '@/components/SearchBar';
 import RecentBills from '@/components/RecentBills';
-import LandingHero from '@/components/LandingHero';
+import LandingModal from '@/components/LandingModal';
 import WhatsHot from '@/components/WhatsHot';
 
 const POLICY_AREAS = [
@@ -25,19 +24,13 @@ const POLICY_AREAS = [
 ];
 
 export default function HomePage() {
-  const appRef = useRef<HTMLDivElement>(null);
-
-  function scrollToApp() {
-    appRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }
-
   return (
     <>
-      {/* Storytelling landing */}
-      <LandingHero onEnter={scrollToApp} />
+      {/* First-visit storytelling modal */}
+      <LandingModal />
 
       {/* The actual app */}
-      <div ref={appRef} className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8">
         <div className="max-w-5xl mx-auto">
 
           {/* Hero */}

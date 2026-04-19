@@ -51,7 +51,9 @@ export async function searchAwards(keyword: string, options?: {
   const data = await fetchUSA<any>('/search/spending_by_award/', {
     filters: {
       keywords: [keyword],
-      ...(options?.awardType ? { award_type_codes: mapAwardTypes(options.awardType) } : {}),
+      award_type_codes: options?.awardType
+        ? mapAwardTypes(options.awardType)
+        : mapAwardTypes(['contracts', 'grants', 'direct_payments', 'loans']),
     },
     fields: [
       'Award ID',
