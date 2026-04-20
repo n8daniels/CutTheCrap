@@ -40,13 +40,10 @@ export default function Spending({ billId, billTitle }: SpendingProps) {
     );
   }
 
-  if (error) return null;
-
-  const awards = data?.awards?.awards || [];
-  const agencies = data?.agencySpending?.categories || [];
-  const totalAwards = data?.awards?.count || 0;
-
-  if (awards.length === 0 && agencies.length === 0) return null;
+  const awards = error ? [] : (data?.awards?.awards || []);
+  const agencies = error ? [] : (data?.agencySpending?.categories || []);
+  const totalAwards = error ? 0 : (data?.awards?.count || 0);
+  const hasData = awards.length > 0 || agencies.length > 0;
 
   const maxAgencyAmount = agencies.length > 0 ? agencies[0].amount : 1;
 
@@ -54,6 +51,24 @@ export default function Spending({ billId, billTitle }: SpendingProps) {
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:p-8">
       <h2 className="text-xl font-bold text-gray-900 mb-2">Where the Money Goes</h2>
       <p className="text-sm text-gray-500 mb-6">Federal awards and spending related to this legislation</p>
+
+      {!hasData && (
+        <div className="text-center py-8">
+          <p className="text-gray-500 mb-2">No federal spending data tied to this bill.</p>
+          <p className="text-sm text-gray-400 max-w-2xl mx-auto">
+            This bill may not directly authorize federal contracts, grants, or loans &mdash; or related spending is classified (common for intelligence and national security legislation).
+            <br />
+            <a
+              href={`https://www.usaspending.gov/search/?keywords=${encodeURIComponent(billTitle)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary-600 hover:underline mt-2 inline-block"
+            >
+              Search USASpending.gov directly &rarr;
+            </a>
+          </p>
+        </div>
+      )}
 
       {/* Agency Spending Breakdown */}
       {agencies.length > 0 && (
