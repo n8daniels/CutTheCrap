@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-
-const BILL_ID_PATTERN = /^\d+\/[a-z]+\/\d+$/;
+import { normalizeBillId } from '@/lib/bill-id';
 
 // Map popular nicknames to bill IDs
 const BILL_NICKNAMES: Record<string, { id: string; title: string }> = {
@@ -159,8 +158,8 @@ export default function SearchBar() {
       return;
     }
 
-    // If it looks like a bill ID, don't search
-    if (BILL_ID_PATTERN.test(query)) {
+    // If it parses as a bill ID (canonical or friendly), skip the search — submit will route directly.
+    if (normalizeBillId(query) !== null) {
       setResults([]);
       setShowDropdown(false);
       return;
@@ -200,9 +199,10 @@ export default function SearchBar() {
     e.preventDefault();
     if (!query.trim()) return;
 
-    // Check bill ID pattern
-    if (BILL_ID_PATTERN.test(query.trim())) {
-      router.push(`/bills?id=${query.trim()}`);
+    // Bill ID (canonical or friendly, e.g. "HR 3684", "H.R. 3684", "hr3684").
+    const normalized = normalizeBillId(query.trim());
+    if (normalized) {
+      router.push(`/bills?id=${normalized}`);
       setShowDropdown(false);
       return;
     }
@@ -227,7 +227,7 @@ export default function SearchBar() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder='Search bills (e.g. "infrastructure") or enter bill ID (119/hr/1234)'
+            placeholder='Search bills (e.g. "infrastructure") or enter bill ID (HR 1234 or 119/hr/1234)'
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-base"
           />
           {loading && (

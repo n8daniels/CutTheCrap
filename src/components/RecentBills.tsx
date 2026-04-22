@@ -7,9 +7,10 @@ interface RecentBillsProps {
   title: string;
   congress?: number;
   limit?: number;
+  excludeIds?: readonly string[];
 }
 
-export default function RecentBills({ title, congress = 119, limit = 8 }: RecentBillsProps) {
+export default function RecentBills({ title, congress = 119, limit = 8, excludeIds }: RecentBillsProps) {
   const [bills, setBills] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,10 +18,15 @@ export default function RecentBills({ title, congress = 119, limit = 8 }: Recent
   useEffect(() => {
     async function fetchBills() {
       try {
-        const res = await fetch(`/api/bills/recent?congress=${congress}&limit=${limit}`);
+        // Over-fetch so dedupe doesn't shrink the visible count below `limit`.
+        const excludeCount = excludeIds?.length ?? 0;
+        const fetchLimit = Math.min(limit + excludeCount, 25);
+        const res = await fetch(`/api/bills/recent?congress=${congress}&limit=${fetchLimit}`);
         if (!res.ok) throw new Error('Failed to fetch');
         const data = await res.json();
-        setBills(data.bills || []);
+        const excludeSet = new Set(excludeIds ?? []);
+        const filtered = (data.bills || []).filter((b: any) => !excludeSet.has(b.id)).slice(0, limit);
+        setBills(filtered);
       } catch (err) {
         setError('Unable to load bills');
       } finally {
@@ -28,7 +34,7 @@ export default function RecentBills({ title, congress = 119, limit = 8 }: Recent
       }
     }
     fetchBills();
-  }, [congress, limit]);
+  }, [congress, limit, excludeIds]);
 
   if (error) {
     return (

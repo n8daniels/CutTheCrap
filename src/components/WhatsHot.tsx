@@ -70,6 +70,8 @@ const CURATED_ITEMS: NewsItem[] = [
   },
 ];
 
+export const CURATED_BILL_IDS: readonly string[] = CURATED_ITEMS.map((item) => item.billId);
+
 function TagPill({ tag }: { tag: string }) {
   const colors = TAG_COLORS[tag] ?? 'bg-gray-100 text-gray-700';
   return (

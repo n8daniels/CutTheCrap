@@ -3,7 +3,7 @@
 import SearchBar from '@/components/SearchBar';
 import RecentBills from '@/components/RecentBills';
 import LandingModal from '@/components/LandingModal';
-import WhatsHot from '@/components/WhatsHot';
+import WhatsHot, { CURATED_BILL_IDS } from '@/components/WhatsHot';
 
 const POLICY_AREAS = [
   'Armed Forces and National Security',
@@ -56,7 +56,12 @@ export default function HomePage() {
 
           {/* Recent Bills */}
           <div className="mb-10">
-            <RecentBills title="Recently Active in Congress" congress={119} limit={8} />
+            <RecentBills
+              title="Recently Active in Congress"
+              congress={119}
+              limit={8}
+              excludeIds={CURATED_BILL_IDS}
+            />
           </div>
 
           {/* Browse by Subject */}

@@ -8,6 +8,7 @@ import VoteHemicycle from '@/components/bill/VoteHemicycle';
 import Regulations from '@/components/bill/Regulations';
 import Spending from '@/components/bill/Spending';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { normalizeBillId } from '@/lib/bill-id';
 
 export default function BillsPage() {
   return (
@@ -24,23 +25,54 @@ function BillsContent() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
   const [data, setData] = useState<any>(null);
 
   useEffect(() => {
     if (!billId) return;
+
+    // If user arrived with a friendly format (e.g. /bills?id=HR+3684),
+    // redirect to the canonical URL so links stay shareable and consistent.
+    const normalized = normalizeBillId(billId);
+    if (normalized && normalized !== billId) {
+      router.replace(`/bills?id=${normalized}`);
+      return;
+    }
+    if (!normalized) {
+      setError(`"${billId}" doesn't look like a bill ID. Try a format like "HR 3684" or "119/hr/3684".`);
+      setNotFound(true);
+      return;
+    }
+
     setLoading(true);
     setError(null);
+    setNotFound(false);
 
     fetch('/api/bills/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ billId, includeDependencies: true, maxDepth: 2 }),
+      body: JSON.stringify({ billId: normalized, includeDependencies: true, maxDepth: 2 }),
     })
-      .then(r => { if (!r.ok) throw new Error(`Failed: ${r.statusText}`); return r.json(); })
+      .then(async r => {
+        if (!r.ok) {
+          let message = r.statusText || 'Request failed';
+          try {
+            const body = await r.json();
+            if (body?.error) message = body.error;
+          } catch {}
+          const err: any = new Error(message);
+          err.status = r.status;
+          throw err;
+        }
+        return r.json();
+      })
       .then(setData)
-      .catch(err => setError(err.message))
+      .catch(err => {
+        setError(err.message);
+        setNotFound(err.status === 404);
+      })
       .finally(() => setLoading(false));
-  }, [billId]);
+  }, [billId, router]);
 
   if (!billId) {
     return (
@@ -78,6 +110,20 @@ function BillsContent() {
   }
 
   if (error) {
+    if (notFound) {
+      return (
+        <div className="w-full px-4 py-20">
+          <div className="max-w-xl mx-auto bg-white border border-gray-200 rounded-xl p-8 text-center shadow-sm">
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">Bill not found</h2>
+            <p className="text-gray-600 mb-2">We couldn&rsquo;t find <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-sm">{billId}</span>.</p>
+            <p className="text-sm text-gray-500 mb-6">
+              Bill IDs look like <span className="font-mono">HR 3684</span>, <span className="font-mono">S 1</span>, or <span className="font-mono">119/hr/1</span>. Double-check the chamber and number, or try searching by keyword instead.
+            </p>
+            <button onClick={() => router.push('/')} className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700">Search bills</button>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="w-full px-4 py-20">
         <div className="max-w-xl mx-auto bg-red-50 border border-red-200 rounded-xl p-8 text-center">
