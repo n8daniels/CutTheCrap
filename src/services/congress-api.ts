@@ -96,6 +96,23 @@ async function fetchJSON<T>(path: string): Promise<T> {
   return response.json();
 }
 
+async function fetchJSONCached<T>(path: string, revalidate: number): Promise<T> {
+  const separator = path.includes('?') ? '&' : '?';
+  const url = `${BASE_URL}${path}${separator}api_key=${config.congressApiKey}&format=json`;
+
+  const response = await fetch(url, {
+    headers: { 'Accept': 'application/json' },
+    signal: AbortSignal.timeout(15000),
+    next: { revalidate },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Congress API error: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 /**
  * Search bills by keyword
  */
@@ -176,6 +193,47 @@ interface CongressBillListItem {
 function parseBillId(billId: string): { congress: string; type: string; number: string } {
   const [congress, type, number] = billId.split('/');
   return { congress, type, number };
+}
+
+/**
+ * Lightweight bill metadata for page titles and OG tags.
+ * Two cached fetches (bill details + summaries). Returns null on any failure so
+ * generateMetadata never throws — the page falls back to site-wide defaults.
+ */
+export async function fetchBillMetadata(billId: string): Promise<{
+  title: string;
+  policyArea: string | null;
+  latestAction: string | null;
+  summary: string | null;
+} | null> {
+  try {
+    const { congress, type, number } = parseBillId(billId);
+    if (!congress || !type || !number) return null;
+    const basePath = `/bill/${congress}/${type}/${number}`;
+
+    const [billData, summaryData] = await Promise.all([
+      fetchJSONCached<CongressBill>(basePath, 3600),
+      fetchJSONCached<CongressSummary>(`${basePath}/summaries`, 3600).catch(() => ({ summaries: [] as CongressSummary['summaries'] })),
+    ]);
+
+    const bill = billData.bill;
+    const latestSummary = summaryData.summaries?.length
+      ? summaryData.summaries[summaryData.summaries.length - 1]
+      : null;
+
+    const cleanSummary = latestSummary?.text
+      ? latestSummary.text.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+      : null;
+
+    return {
+      title: bill.title,
+      policyArea: bill.policyArea?.name ?? null,
+      latestAction: bill.latestAction?.text ?? null,
+      summary: cleanSummary,
+    };
+  } catch {
+    return null;
+  }
 }
 
 /**
